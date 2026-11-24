@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
 <title>RAMI AI</title>
 
@@ -16,14 +16,14 @@ html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 100%;
+  height: 100dvh;
   background: #000000;
   color: #ffffff;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   overflow: hidden;
 }
 
-/* Fullscreen 3D Canvas */
+/* Fullscreen Interactive 3D Canvas */
 #faceCanvas {
   position: fixed;
   inset: 0;
@@ -34,7 +34,7 @@ html, body {
   z-index: 1;
 }
 
-/* Minimalist Futuristic HUD Overlay */
+/* HUD Layout */
 .hud {
   position: fixed;
   inset: 0;
@@ -43,22 +43,24 @@ html, body {
   flex-direction: column;
   justify-content: space-between;
   pointer-events: none;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 header {
-  padding: 18px 20px;
+  padding: 14px 18px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.85), rgba(0,0,0,0));
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.88), rgba(0, 0, 0, 0));
 }
 
 .logo {
   letter-spacing: 6px;
-  font-size: 18px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
   color: #ffffff;
-  text-shadow: 0 0 12px rgba(255, 255, 255, 0.45);
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.45);
 }
 
 .header-right {
@@ -70,122 +72,233 @@ header {
 
 .status {
   font-size: 11px;
-  letter-spacing: 1.5px;
-  color: rgba(255, 255, 255, 0.75);
+  letter-spacing: 1.4px;
+  color: rgba(255, 255, 255, 0.72);
   text-transform: uppercase;
+  transition: color 0.2s, text-shadow 0.2s;
 }
 
-.status.speaking {
+.status.active {
   color: #ffffff;
-  text-shadow: 0 0 10px #ffffff;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.85);
 }
 
 .voice-toggle {
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   color: #ffffff;
   font-size: 11px;
-  letter-spacing: 1px;
-  padding: 6px 10px;
-  border-radius: 20px;
+  letter-spacing: 0.8px;
+  padding: 6px 11px;
+  border-radius: 999px;
   cursor: pointer;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: opacity 0.2s, background 0.2s;
 }
 
 .voice-toggle.muted {
   opacity: 0.45;
 }
 
-/* Bottom Chat & Controls */
+/* Smooth Texting App Bottom Dock */
 .bottom-dock {
   width: 100%;
-  max-width: 560px;
+  max-width: 600px;
   margin: 0 auto;
-  padding: 12px 16px 22px;
-  background: linear-gradient(to top, rgba(0,0,0,0.96) 55%, rgba(0,0,0,0));
+  padding: 10px 14px 16px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.96) 58%, rgba(0, 0, 0, 0));
   pointer-events: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 #messages {
-  max-height: 26vh;
+  max-height: 31vh;
   overflow-y: auto;
-  margin-bottom: 12px;
-  padding-right: 4px;
+  padding: 6px 4px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  scroll-behavior: smooth;
   scrollbar-width: none;
+  mask-image: linear-gradient(to bottom, transparent 0%, black 14%, black 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 14%, black 100%);
 }
 
 #messages::-webkit-scrollbar {
   display: none;
 }
 
-.message {
-  padding: 10px 14px;
-  margin: 8px 0;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 12px;
-  background: rgba(12, 12, 12, 0.72);
-  backdrop-filter: blur(10px);
-  font-size: 14px;
-  line-height: 1.45;
-  color: rgba(255, 255, 255, 0.92);
-  white-space: pre-wrap;
+@keyframes msgPop {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-.message strong {
-  font-size: 11px;
-  letter-spacing: 2px;
-  color: rgba(255, 255, 255, 0.55);
-  text-transform: uppercase;
-}
-
-.controls {
+.msg-row {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  max-width: 84%;
+  animation: msgPop 0.26s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-input {
+.msg-row.user {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.msg-row.ai {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.agent-badge {
+  font-size: 9.5px;
+  letter-spacing: 1.3px;
+  color: rgba(255, 255, 255, 0.48);
+  text-transform: uppercase;
+  margin: 0 0 4px 6px;
+}
+
+.bubble {
+  padding: 10px 14px;
+  font-size: 14.5px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.msg-row.user .bubble {
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #ffffff;
+  border-radius: 18px 18px 4px 18px;
+}
+
+.msg-row.ai .bubble {
+  background: rgba(16, 16, 18, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.94);
+  border-radius: 18px 18px 18px 4px;
+}
+
+/* Smooth 3-dot Typing Indicator */
+.typing-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 2px;
+}
+
+.typing-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.75);
+  animation: dotBounce 1.2s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(2) { animation-delay: 0.18s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.36s; }
+
+@keyframes dotBounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
+  40% { transform: translateY(-4px); opacity: 1; }
+}
+
+/* Input & Action Bar (Input + Send + Stop + Mic) */
+.composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 7px;
+  background: rgba(18, 18, 20, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 22px;
+  padding: 6px 7px 6px 14px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: border-color 0.2s;
+}
+
+.composer:focus-within {
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+textarea {
   flex: 1;
   min-width: 0;
-  padding: 14px 16px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  background: rgba(15, 15, 15, 0.85);
+  max-height: 96px;
+  border: none;
+  background: transparent;
   color: #ffffff;
+  font-family: inherit;
   font-size: 16px;
+  line-height: 1.35;
+  padding: 7px 0;
+  resize: none;
   outline: none;
-  backdrop-filter: blur(10px);
 }
 
-input::placeholder {
+textarea::placeholder {
   color: rgba(255, 255, 255, 0.38);
 }
 
-input:focus {
-  border-color: rgba(255, 255, 255, 0.65);
-}
-
-button.action-btn {
-  padding: 14px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 12px;
+.icon-btn {
+  height: 38px;
+  min-width: 38px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
-  font-size: 15px;
+  font-size: 13.5px;
   font-weight: 500;
   cursor: pointer;
-  backdrop-filter: blur(10px);
-  transition: background 0.2s, border-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex-shrink: 0;
+  transition: transform 0.12s, background 0.2s, border-color 0.2s, opacity 0.2s;
 }
 
-button.action-btn:active {
-  background: rgba(255, 255, 255, 0.28);
-  border-color: #ffffff;
+.icon-btn:active {
+  transform: scale(0.94);
 }
 
-button.listening {
-  background: rgba(255, 255, 255, 0.28);
+.send-btn {
+  background: #ffffff;
+  color: #000000;
   border-color: #ffffff;
-  box-shadow: 0 0 16px rgba(255, 255, 255, 0.4);
+  font-weight: 600;
+}
+
+.stop-btn {
+  background: rgba(255, 75, 75, 0.14);
+  border-color: rgba(255, 95, 95, 0.35);
+  color: rgba(255, 190, 190, 0.75);
+  padding: 0 11px;
+}
+
+.stop-btn.armed {
+  background: rgba(255, 65, 65, 0.32);
+  border-color: #ff6b6b;
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(255, 75, 75, 0.45);
+}
+
+.mic-btn.listening {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: #ffffff;
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.5);
 }
 </style>
 </head>
@@ -205,234 +318,504 @@ button.listening {
 
   <div class="bottom-dock">
     <div id="messages">
-      <div class="message">
-        <strong>RAMI AI</strong><br>
-        Good day, Rami. My neural interface is online. Tap the microphone or type below to speak with me.
+      <div class="msg-row ai">
+        <div class="agent-badge">ORCHESTRATOR • READY</div>
+        <div class="bubble">Good day, Rami. My neural agents are synchronized and ready. Type or tap the mic to talk.</div>
       </div>
     </div>
 
-    <div class="controls">
-      <input id="input" placeholder="Talk to RAMI..." autocomplete="off">
-      <button class="action-btn" onclick="sendMessage()">Send</button>
-      <button id="micBtn" class="action-btn" onclick="listen()">🎙️</button>
+    <div class="composer">
+      <textarea id="input" rows="1" placeholder="Message RAMI..." autocomplete="off"></textarea>
+      <button class="icon-btn send-btn" onclick="sendMessage()" title="Send">Send</button>
+      <button id="stopBtn" class="icon-btn stop-btn" onclick="stopAllActivity()" title="Stop searching or speaking">■</button>
+      <button id="micBtn" class="icon-btn mic-btn" onclick="listen()" title="Voice Input">🎙️</button>
     </div>
   </div>
 </div>
 
 <script>
-const WORKER_URL = "https://jarvis-worker.5rk2sbwzjp.workers.dev/";
+const WORKER_URL = "https://jarvis-worker.5rk2sbwzjp.workers.dev";
 
-// ==========================================
-// 1. VOICE (TEXT-TO-SPEECH & SPEECH-TO-TEXT)
-// ==========================================
+// ==========================================================
+// 1. STATE, ABORT CONTROL & STOP BUTTON
+// ==========================================================
 let voiceEnabled = true;
+let isThinking = false;
 let isSpeaking = false;
-let speechUnlocked = false;
-let preferredVoice = null;
+let isListening = false;
+let speechGenerationId = 0;
+let startupGreeted = false;
 
-function loadVoices() {
+let activeFetchController = null;
+let activeRecognition = null;
+let currentAudio = null;
+let audioCtx = null;
+let analyserNode = null;
+let analyserData = null;
+let liveAudioLevel = 0;
+
+const conversationHistory = [];
+
+function updateUIState(statusLabel, active = false) {
+  const statusEl = document.getElementById("statusText");
+  statusEl.textContent = "● " + statusLabel;
+  statusEl.classList.toggle("active", active);
+
+  const stopBtn = document.getElementById("stopBtn");
+  stopBtn.classList.toggle("armed", isThinking || isSpeaking || isListening);
+}
+
+function stopAllActivity() {
+  speechGenerationId++;
+
+  // 1. Abort active network search / multi-agent call
+  if (activeFetchController) {
+    activeFetchController.abort();
+    activeFetchController = null;
+  }
+
+  // 2. Stop Orpheus neural audio playback
+  if (currentAudio) {
+    try {
+      currentAudio.pause();
+      currentAudio.src = "";
+    } catch (_) {}
+    currentAudio = null;
+  }
+
+  // 3. Stop browser speech synthesis
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+  }
+
+  // 4. Stop active voice recognition
+  if (activeRecognition) {
+    try {
+      activeRecognition.abort();
+    } catch (_) {}
+    activeRecognition = null;
+  }
+
+  isThinking = false;
+  isSpeaking = false;
+  isListening = false;
+  liveAudioLevel = 0;
+  document.getElementById("micBtn").classList.remove("listening");
+  updateUIState("ONLINE", false);
+}
+
+// ==========================================================
+// 2. REALISTIC NEURAL VOICE + AMPLITUDE LIP-SYNC
+// ==========================================================
+let preferredBrowserVoice = null;
+
+function loadBrowserVoices() {
   if (!("speechSynthesis" in window)) return;
   const voices = window.speechSynthesis.getVoices();
   if (!voices.length) return;
 
-  preferredVoice =
-    voices.find(v => v.lang.startsWith("en") && (v.name.includes("Daniel") || v.name.includes("Alex") || v.name.includes("Google UK English Male") || v.name.includes("Arthur"))) ||
+  preferredBrowserVoice =
+    voices.find(v => v.lang.startsWith("en") && /Natural|Neural|Premium|Enhanced|Daniel|Arthur|Alex|Google UK English Male/i.test(v.name)) ||
     voices.find(v => v.lang.startsWith("en") && v.localService) ||
     voices.find(v => v.lang.startsWith("en")) ||
     voices[0];
 }
 
 if ("speechSynthesis" in window) {
-  loadVoices();
-  window.speechSynthesis.onvoiceschanged = loadVoices;
+  loadBrowserVoices();
+  window.speechSynthesis.onvoiceschanged = loadBrowserVoices;
 }
 
-// Unlock iOS Safari audio on first touch/click
-function unlockSpeech() {
-  if (speechUnlocked || !("speechSynthesis" in window)) return;
-  const silent = new SpeechSynthesisUtterance("");
-  silent.volume = 0;
-  window.speechSynthesis.speak(silent);
-  speechUnlocked = true;
-}
-window.addEventListener("touchstart", unlockSpeech, { once: true });
-window.addEventListener("click", unlockSpeech, { once: true });
+function unlockAudioSystems() {
+  try {
+    if (!audioCtx) {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextClass) {
+        audioCtx = new AudioContextClass();
+        analyserNode = audioCtx.createAnalyser();
+        analyserNode.fftSize = 256;
+        analyserData = new Uint8Array(analyserNode.frequencyBinCount);
+      }
+    }
+    if (audioCtx && audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
+  } catch (_) {}
 
-function setStatus(label, speaking = false) {
-  const el = document.getElementById("statusText");
-  el.textContent = "● " + label;
-  if (speaking) el.classList.add("speaking");
-  else el.classList.remove("speaking");
+  if ("speechSynthesis" in window && !window._ttsUnlocked) {
+    const s = new SpeechSynthesisUtterance("");
+    s.volume = 0;
+    window.speechSynthesis.speak(s);
+    window._ttsUnlocked = true;
+  }
 }
+
+window.addEventListener("touchstart", unlockAudioSystems, { once: true });
+window.addEventListener("click", unlockAudioSystems, { once: true });
 
 function toggleVoice() {
-  unlockSpeech();
+  unlockAudioSystems();
   voiceEnabled = !voiceEnabled;
   const btn = document.getElementById("voiceBtn");
   if (voiceEnabled) {
     btn.textContent = "🔊 VOICE ON";
     btn.classList.remove("muted");
-    speakText("Voice output enabled, Rami.");
+    speakText("Voice output active.");
   } else {
     btn.textContent = "🔇 MUTED";
     btn.classList.add("muted");
+    speechGenerationId++;
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio = null;
+    }
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     isSpeaking = false;
-    setStatus("ONLINE", false);
+    liveAudioLevel = 0;
+    updateUIState("ONLINE", false);
   }
 }
 
-function speakText(rawText) {
-  if (!voiceEnabled || !("speechSynthesis" in window)) return;
-
-  // Clean markdown symbols before speaking
-  const cleanText = rawText
-    .replace(/[*#_`~>-]/g, " ")
+// Split reply into natural sentence chunks <= 185 chars for Groq Orpheus TTS
+function splitIntoVoiceChunks(text) {
+  const clean = text
+    .replace(/```[\s\S]*?```/g, " Code block provided on screen. ")
+    .replace(/[*#_`~>|[\]]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 
-  if (!cleanText) return;
+  if (!clean) return [];
 
+  const sentences = clean.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [clean];
+  const chunks = [];
+
+  for (let s of sentences) {
+    s = s.trim();
+    if (!s) continue;
+    while (s.length > 185) {
+      let cut = s.lastIndexOf(",", 185);
+      if (cut < 60) cut = s.lastIndexOf(" ", 185);
+      if (cut < 40) cut = 185;
+      chunks.push(s.slice(0, cut).trim());
+      s = s.slice(cut).trim();
+    }
+    if (s) chunks.push(s);
+  }
+  return chunks.slice(0, 8);
+}
+
+async function fetchOrpheusChunkBlob(chunkText, signal) {
+  const res = await fetch(`${WORKER_URL}/tts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text: chunkText, voice: "daniel" }),
+    signal,
+  });
+  if (!res.ok) throw new Error("Orpheus TTS unavailable");
+  return await res.blob();
+}
+
+function playBlobWithLipSync(blob, genId, isGreeting = false) {
+  return new Promise((resolve, reject) => {
+    if (genId !== speechGenerationId) return resolve();
+
+    const objectUrl = URL.createObjectURL(blob);
+    const audio = new Audio(objectUrl);
+    audio.crossOrigin = "anonymous";
+    currentAudio = audio;
+
+    try {
+      if (audioCtx && analyserNode) {
+        const source = audioCtx.createMediaElementSource(audio);
+        source.connect(analyserNode);
+        analyserNode.connect(audioCtx.destination);
+      }
+    } catch (_) {}
+
+    audio.onended = () => {
+      URL.revokeObjectURL(objectUrl);
+      if (currentAudio === audio) currentAudio = null;
+      resolve();
+    };
+
+    audio.onerror = (e) => {
+      URL.revokeObjectURL(objectUrl);
+      if (currentAudio === audio) currentAudio = null;
+      reject(e);
+    };
+
+    audio.play()
+      .then(() => {
+        if (isGreeting) startupGreeted = true;
+      })
+      .catch(reject);
+  });
+}
+
+function speakWithBrowserFallback(text, genId, isGreeting = false) {
+  if (!("speechSynthesis" in window) || genId !== speechGenerationId) return;
   window.speechSynthesis.cancel();
-  if (!preferredVoice) loadVoices();
+  if (!preferredBrowserVoice) loadBrowserVoices();
 
-  const utterance = new SpeechSynthesisUtterance(cleanText);
-  if (preferredVoice) utterance.voice = preferredVoice;
-  utterance.rate = 0.98;
-  utterance.pitch = 0.95;
+  const utterance = new SpeechSynthesisUtterance(text);
+  if (preferredBrowserVoice) utterance.voice = preferredBrowserVoice;
+  utterance.rate = 0.97;
+  utterance.pitch = 0.94;
 
   utterance.onstart = () => {
+    if (genId !== speechGenerationId) return;
+    if (isGreeting) startupGreeted = true;
     isSpeaking = true;
-    setStatus("SPEAKING", true);
+    updateUIState("SPEAKING", true);
   };
 
   utterance.onend = () => {
+    if (genId !== speechGenerationId) return;
     isSpeaking = false;
-    setStatus("ONLINE", false);
+    liveAudioLevel = 0;
+    updateUIState("ONLINE", false);
   };
 
   utterance.onerror = () => {
+    if (genId !== speechGenerationId) return;
     isSpeaking = false;
-    setStatus("ONLINE", false);
+    liveAudioLevel = 0;
+    updateUIState("ONLINE", false);
   };
-
-  // Fallback timer in case mobile Safari misses onend
-  const estimatedMs = Math.max(1800, cleanText.length * 65);
-  clearTimeout(window._speechFallbackTimer);
-  window._speechFallbackTimer = setTimeout(() => {
-    if (isSpeaking && !window.speechSynthesis.speaking) {
-      isSpeaking = false;
-      setStatus("ONLINE", false);
-    }
-  }, estimatedMs + 1500);
 
   window.speechSynthesis.speak(utterance);
 }
 
-// ==========================================
-// 2. CHAT & CLOUDFLARE WORKER INTEGRATION
-// ==========================================
-function addMessage(sender, text) {
-  const box = document.getElementById("messages");
-  const message = document.createElement("div");
-  message.className = "message";
+async function speakText(rawText, isGreeting = false) {
+  if (!voiceEnabled) return;
+  const chunks = splitIntoVoiceChunks(rawText);
+  if (!chunks.length) return;
 
-  const title = document.createElement("strong");
-  title.textContent = sender;
+  const genId = ++speechGenerationId;
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
 
-  const content = document.createElement("div");
-  content.textContent = text;
+  isSpeaking = true;
+  updateUIState("SPEAKING", true);
 
-  message.append(title, document.createElement("br"), content);
-  box.appendChild(message);
-  box.scrollTop = box.scrollHeight;
-  return content;
+  try {
+    let nextBlobPromise = fetchOrpheusChunkBlob(chunks[0], activeFetchController?.signal);
+
+    for (let i = 0; i < chunks.length; i++) {
+      if (genId !== speechGenerationId || !voiceEnabled) break;
+      const blob = await nextBlobPromise;
+
+      if (i + 1 < chunks.length && genId === speechGenerationId) {
+        nextBlobPromise = fetchOrpheusChunkBlob(chunks[i + 1], activeFetchController?.signal);
+      }
+
+      if (genId !== speechGenerationId || !voiceEnabled) break;
+      await playBlobWithLipSync(blob, genId, isGreeting);
+    }
+
+    if (genId === speechGenerationId) {
+      isSpeaking = false;
+      liveAudioLevel = 0;
+      updateUIState("ONLINE", false);
+    }
+  } catch (_) {
+    if (genId === speechGenerationId && voiceEnabled) {
+      speakWithBrowserFallback(chunks.join(" "), genId, isGreeting);
+    }
+  }
+}
+
+// ==========================================================
+// 3. SMOOTH TEXTING APP MESSAGES & ORCHESTRATOR CALL
+// ==========================================================
+const messagesBox = document.getElementById("messages");
+const inputEl = document.getElementById("input");
+
+inputEl.addEventListener("input", () => {
+  inputEl.style.height = "auto";
+  inputEl.style.height = Math.min(inputEl.scrollHeight, 96) + "px";
+});
+
+inputEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+function scrollToBottom() {
+  requestAnimationFrame(() => {
+    messagesBox.scrollTop = messagesBox.scrollHeight;
+  });
+}
+
+function appendUserMessage(text) {
+  const row = document.createElement("div");
+  row.className = "msg-row user";
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.textContent = text;
+
+  row.appendChild(bubble);
+  messagesBox.appendChild(row);
+  scrollToBottom();
+}
+
+function appendTypingBubble() {
+  const row = document.createElement("div");
+  row.className = "msg-row ai";
+
+  const badge = document.createElement("div");
+  badge.className = "agent-badge";
+  badge.textContent = "ORCHESTRATOR • COORDINATING AGENTS";
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.innerHTML = `<div class="typing-dots"><span></span><span></span><span></span></div>`;
+
+  row.append(badge, bubble);
+  messagesBox.appendChild(row);
+  scrollToBottom();
+  return { row, badge, bubble };
 }
 
 async function sendMessage() {
-  unlockSpeech();
-  const input = document.getElementById("input");
-  const text = input.value.trim();
+  unlockAudioSystems();
+  const text = inputEl.value.trim();
   if (!text) return;
 
-  addMessage("RAMI", text);
-  input.value = "";
-  setStatus("THINKING", false);
+  speechGenerationId++;
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  isSpeaking = false;
 
-  const replyContent = addMessage("RAMI AI", "Processing...");
+  if (activeFetchController) activeFetchController.abort();
+  activeFetchController = new AbortController();
+
+  appendUserMessage(text);
+  inputEl.value = "";
+  inputEl.style.height = "auto";
+
+  isThinking = true;
+  updateUIState("ORCHESTRATING", true);
+  const typing = appendTypingBubble();
 
   try {
     const response = await fetch(WORKER_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: text })
+      body: JSON.stringify({
+        prompt: text,
+        history: conversationHistory.slice(-6),
+      }),
+      signal: activeFetchController.signal,
     });
 
     const data = await response.json();
-
     if (!response.ok) {
-      throw new Error(data.error || "Server error (" + response.status + ")");
+      throw new Error(data.error || `Server error (${response.status})`);
     }
 
-    replyContent.textContent = data.reply;
-    document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
-    setStatus("ONLINE", false);
+    const agentsLabel = Array.isArray(data.agents) && data.agents.length
+      ? data.agents.join(" → ")
+      : "RAMI AI";
+
+    typing.badge.textContent = agentsLabel;
+    typing.bubble.textContent = data.reply;
+    scrollToBottom();
+
+    conversationHistory.push({ role: "user", content: text });
+    conversationHistory.push({ role: "assistant", content: data.reply });
+
+    isThinking = false;
+    activeFetchController = null;
+    updateUIState("ONLINE", false);
+
     speakText(data.reply);
   } catch (err) {
-    replyContent.textContent = "Error: " + err.message;
-    setStatus("ONLINE", false);
+    isThinking = false;
+    activeFetchController = null;
+
+    if (err.name === "AbortError") {
+      typing.badge.textContent = "STOPPED";
+      typing.bubble.textContent = "Stopped.";
+    } else {
+      typing.badge.textContent = "SYSTEM NOTICE";
+      typing.bubble.textContent = "Error: " + err.message;
+    }
+    scrollToBottom();
+    updateUIState("ONLINE", false);
   }
 }
 
 function listen() {
-  unlockSpeech();
+  unlockAudioSystems();
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
   if (!SpeechRecognition) {
-    const msg = "Voice input is not supported in this browser. Please type your message.";
-    addMessage("RAMI AI", msg);
-    speakText(msg);
+    const typing = appendTypingBubble();
+    typing.badge.textContent = "SYSTEM";
+    typing.bubble.textContent = "Voice input is not supported in this browser. Please type below.";
     return;
   }
 
-  if ("speechSynthesis" in window) {
-    window.speechSynthesis.cancel();
-    isSpeaking = false;
+  if (isListening && activeRecognition) {
+    activeRecognition.stop();
+    return;
   }
+
+  speechGenerationId++;
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  isSpeaking = false;
 
   const micBtn = document.getElementById("micBtn");
   const recognition = new SpeechRecognition();
+  activeRecognition = recognition;
   recognition.lang = "en-US";
   recognition.interimResults = false;
 
+  isListening = true;
   micBtn.classList.add("listening");
-  setStatus("LISTENING", true);
+  updateUIState("LISTENING", true);
   recognition.start();
 
-  recognition.onresult = function(event) {
+  recognition.onresult = (event) => {
+    isListening = false;
+    activeRecognition = null;
     micBtn.classList.remove("listening");
-    document.getElementById("input").value = event.results[0][0].transcript;
+    inputEl.value = event.results[0][0].transcript;
     sendMessage();
   };
 
-  recognition.onerror = function() {
+  recognition.onerror = () => {
+    isListening = false;
+    activeRecognition = null;
     micBtn.classList.remove("listening");
-    setStatus("ONLINE", false);
+    if (!isThinking && !isSpeaking) updateUIState("ONLINE", false);
   };
 
-  recognition.onend = function() {
+  recognition.onend = () => {
+    isListening = false;
+    activeRecognition = null;
     micBtn.classList.remove("listening");
-    if (!isSpeaking) setStatus("ONLINE", false);
+    if (!isThinking && !isSpeaking) updateUIState("ONLINE", false);
   };
 }
 
-document.getElementById("input").addEventListener("keydown", function(event) {
-  if (event.key === "Enter") sendMessage();
-});
-
-// ==========================================
-// 3. INTERACTIVE 3D WHITE-DOT HUMANOID FACE
-// ==========================================
+// ==========================================================
+// 4. PHOTOREALISTIC 3D DOT-MATRIX HUMANOID FACE
+// ==========================================================
 const canvas = document.getElementById("faceCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -450,138 +833,146 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-// Gaussian helper for anatomical sculpting
 function gauss(x, mu, sigma) {
   const d = (x - mu) / sigma;
   return Math.exp(-0.5 * d * d);
 }
 
-// Build 3D Humanoid Head Mesh & Particle Cloud
-const U_STEPS = 66; // horizontal rings
-const V_STEPS = 54; // vertical rings
+function smoothstep(edge0, edge1, x) {
+  const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+}
+
 const headVertices = [];
 const meshEdges = [];
-const eyeParticles = [];
-const ambientParticles = [];
+const eyeDetails = [];
+const ambientBokeh = [];
 
-function createHeadGeometry() {
-  for (let iv = 0; iv <= V_STEPS; iv++) {
-    const v = iv / V_STEPS; // 0 = top of crown, 1 = base of neck
-    for (let iu = 0; iu < U_STEPS; iu++) {
-      const u = (iu / U_STEPS) * Math.PI * 2 - Math.PI; // -PI to PI, 0 = front center
+function sampleFaceSurfaceZ(x, y) {
+  const absX = Math.abs(x);
 
-      // Vertical coordinate Y (+Y is up)
-      let y = 1.28 - v * 2.52;
+  const rx = y > 0 ? 0.72 : 0.72 * (1 - 0.34 * Math.pow(Math.min(1, -y / 0.85), 1.45));
+  const ry = 1.12;
+  const normR2 = (x / rx) * (x / rx) + ((y - 0.08) / ry) * ((y - 0.08) / ry);
+  let z = Math.sqrt(Math.max(0.02, 1 - Math.min(0.98, normR2))) * 0.82;
 
-      // Base cranium + jaw + neck silhouette
-      let rx = 0.76;
-      let rz = 0.86;
+  const brow = gauss(y, 0.36, 0.055) * gauss(absX, 0.24, 0.22);
+  z += 0.075 * brow;
 
-      if (v < 0.34) {
-        // Upper cranium dome
-        const t = v / 0.34;
-        const dome = Math.sin(t * Math.PI * 0.5);
-        rx = 0.76 * Math.pow(dome, 0.62);
-        rz = 0.86 * Math.pow(dome, 0.62);
-      } else if (v < 0.72) {
-        // Mid-face to chin taper
-        const t = (v - 0.34) / 0.38;
-        rx = 0.76 * (1 - 0.38 * Math.pow(t, 1.45));
-        rz = 0.86 * (1 - 0.24 * Math.pow(t, 1.35));
-      } else if (v < 0.79) {
-        // Under-chin tuck into neck
-        const t = (v - 0.72) / 0.07;
-        const smooth = t * t * (3 - 2 * t);
-        rx = 0.47 * (1 - smooth) + 0.39 * smooth;
-        rz = 0.65 * (1 - smooth) + 0.41 * smooth;
-      } else {
-        // Neck & slight collar flare
-        const t = (v - 0.79) / 0.21;
-        const flare = Math.pow(t, 2.2) * 0.22;
-        rx = 0.39 + flare;
-        rz = 0.41 + flare * 0.7;
-      }
+  const glabella = gauss(y, 0.34, 0.05) * gauss(x, 0, 0.08);
+  z += 0.045 * glabella;
+
+  const socket = gauss(y, 0.245, 0.068) * gauss(absX, 0.255, 0.105);
+  z -= 0.135 * socket;
+
+  const bridgeMask = smoothstep(0.36, 0.28, y) * smoothstep(-0.06, 0.04, y);
+  const noseBridge = bridgeMask * gauss(x, 0, 0.068);
+  const noseTip = gauss(y, -0.02, 0.052) * gauss(x, 0, 0.078);
+  const nostrilWing = gauss(y, -0.045, 0.042) * gauss(absX, 0.105, 0.048);
+  z += 0.135 * noseBridge + 0.165 * noseTip + 0.078 * nostrilWing;
+
+  const cheek = gauss(y, 0.10, 0.11) * gauss(absX, 0.36, 0.14);
+  z += 0.072 * cheek;
+
+  const philtrum = gauss(y, -0.145, 0.045) * gauss(absX, 0.032, 0.025);
+  z += 0.022 * philtrum;
+
+  const upperLip = gauss(y, -0.205, 0.030) * gauss(absX, 0.055, 0.105);
+  const lipPart = gauss(y, -0.242, 0.016) * gauss(x, 0, 0.145);
+  const lowerLip = gauss(y, -0.282, 0.034) * gauss(x, 0, 0.125);
+  const mouthCorner = gauss(y, -0.242, 0.032) * gauss(absX, 0.175, 0.045);
+  z += 0.088 * upperLip - 0.065 * lipPart + 0.085 * lowerLip - 0.035 * mouthCorner;
+
+  const chinCrease = gauss(y, -0.355, 0.035) * gauss(x, 0, 0.13);
+  const chin = gauss(y, -0.445, 0.068) * gauss(x, 0, 0.145);
+  z += -0.038 * chinCrease + 0.088 * chin;
+
+  return z;
+}
+
+function buildHumanoidPointCloud() {
+  const U_COUNT = 72;
+  const V_COUNT = 58;
+
+  for (let iv = 0; iv <= V_COUNT; iv++) {
+    const v = iv / V_COUNT;
+    const y = 1.20 - v * 2.48;
+
+    let rx = 0.72;
+    let rz = 0.82;
+
+    if (v < 0.31) {
+      const t = v / 0.31;
+      const dome = Math.sin(t * Math.PI * 0.5);
+      rx = 0.72 * Math.pow(dome, 0.58);
+      rz = 0.82 * Math.pow(dome, 0.58);
+    } else if (v < 0.67) {
+      const t = (v - 0.31) / 0.36;
+      rx = 0.72 * (1 - 0.37 * Math.pow(t, 1.45));
+      rz = 0.82 * (1 - 0.23 * Math.pow(t, 1.35));
+    } else if (v < 0.74) {
+      const t = smoothstep(0.67, 0.74, v);
+      rx = 0.45 * (1 - t) + 0.34 * t;
+      rz = 0.63 * (1 - t) + 0.36 * t;
+    } else {
+      const t = (v - 0.74) / 0.26;
+      const shoulderFlare = Math.pow(t, 2.1) * 0.38;
+      rx = 0.34 + shoulderFlare;
+      rz = 0.36 + shoulderFlare * 0.48;
+    }
+
+    for (let iu = 0; iu < U_COUNT; iu++) {
+      const u = (iu / U_COUNT) * Math.PI * 2 - Math.PI;
+      const absU = Math.abs(u);
 
       let x = rx * Math.sin(u);
       let z = rz * Math.cos(u);
 
-      // Flatten temples slightly
-      const templeWeight = gauss(v, 0.36, 0.12) * gauss(Math.abs(u), 1.05, 0.35);
-      x *= (1 - 0.08 * templeWeight);
-
-      // Back of skull fullness (occipital bun)
-      if (Math.abs(u) > 1.7) {
-        const backWeight = gauss(v, 0.34, 0.16) * gauss(Math.abs(u), Math.PI, 0.7);
-        z -= 0.14 * backWeight;
+      if (absU > 1.65 && v < 0.55) {
+        const occ = gauss(v, 0.32, 0.15) * gauss(absU, Math.PI, 0.65);
+        z -= 0.13 * occ;
       }
 
-      // Sculpt facial anatomy on front hemisphere
-      let brightness = 0.55;
-      let sizeMult = 1.0;
+      const temple = gauss(v, 0.34, 0.11) * gauss(absU, 1.0, 0.32);
+      x *= 1 - 0.075 * temple;
+
+      const frontBlend = smoothstep(1.38, 0.75, absU) * smoothstep(0.14, 0.24, v) * smoothstep(0.71, 0.62, v);
+      if (frontBlend > 0.001) {
+        const targetZ = sampleFaceSurfaceZ(x, y);
+        z = z * (1 - frontBlend) + targetZ * frontBlend;
+      }
+
+      const distLeftEye = Math.hypot((x + 0.255) / 0.13, (y - 0.245) / 0.065);
+      const distRightEye = Math.hypot((x - 0.255) / 0.13, (y - 0.245) / 0.065);
+      const distMouth = Math.hypot(x / 0.19, (y + 0.242) / 0.085);
+      const isFront = absU < 1.35;
+
+      const skipDot =
+        isFront && (distLeftEye < 1.05 || distRightEye < 1.05 || distMouth < 0.92);
+
+      const ear = gauss(v, 0.44, 0.062) * gauss(absU, 1.54, 0.085);
+      if (ear > 0.12) {
+        x += Math.sign(u) * 0.068 * ear;
+        z -= 0.025 * ear;
+      }
+
+      const noseHighlight = isFront ? gauss(x, 0, 0.08) * gauss(y, 0.05, 0.22) : 0;
+      const browHighlight = isFront ? gauss(y, 0.35, 0.045) * gauss(Math.abs(x), 0.24, 0.20) : 0;
+      const cheekHighlight = isFront ? gauss(y, 0.10, 0.09) * gauss(Math.abs(x), 0.35, 0.14) : 0;
+
+      const neckFade = v > 0.84 ? 1 - smoothstep(0.84, 1.0, v) : 1;
+
+      const brightness =
+        (0.56 + 0.55 * Math.max(noseHighlight, browHighlight, cheekHighlight * 0.85)) * neckFade;
+      const sizeMult = 0.95 + 0.35 * Math.max(noseHighlight, browHighlight);
+
       let jawWeight = 0;
-
-      if (Math.abs(u) < 1.55 && v > 0.14 && v < 0.75) {
-        const absU = Math.abs(u);
-
-        // Brow ridge
-        const brow = gauss(v, 0.345, 0.024) * gauss(absU, 0.28, 0.26);
-        z += 0.085 * brow;
-
-        // Eye sockets (recessed)
-        const socket = gauss(v, 0.395, 0.032) * gauss(absU, 0.31, 0.12);
-        z -= 0.145 * socket;
-
-        // Nose bridge & tip
-        const noseBridge = Math.exp(-Math.pow((v - 0.45) / 0.095, 2)) * gauss(u, 0, 0.085) * (v > 0.34 && v < 0.55 ? 1 : 0);
-        const noseTip = gauss(v, 0.522, 0.025) * gauss(u, 0, 0.095);
-        const nostril = gauss(v, 0.532, 0.020) * gauss(absU, 0.135, 0.055);
-        z += 0.14 * noseBridge + 0.16 * noseTip + 0.085 * nostril;
-
-        // Cheekbones
-        const cheek = gauss(v, 0.465, 0.055) * gauss(absU, 0.44, 0.18);
-        z += 0.075 * cheek;
-        x += Math.sign(u) * 0.045 * cheek;
-
-        // Philtrum & Lips
-        const upperLip = gauss(v, 0.592, 0.015) * gauss(absU, 0.08, 0.13);
-        const lipSeam = gauss(v, 0.610, 0.009) * gauss(u, 0, 0.18);
-        const lowerLip = gauss(v, 0.628, 0.017) * gauss(u, 0, 0.15);
-        z += 0.095 * upperLip - 0.065 * lipSeam + 0.092 * lowerLip;
-
-        // Chin
-        const chin = gauss(v, 0.692, 0.032) * gauss(u, 0, 0.18);
-        z += 0.095 * chin;
-
-        // Jawline definition
-        const jaw = gauss(v, 0.63, 0.06) * gauss(absU, 0.68, 0.22);
-        x += Math.sign(u) * 0.035 * jaw;
-
-        // Highlight key facial landmarks with brighter, slightly larger white dots
-        const landmarkBoost = Math.max(brow * 0.6, noseTip * 0.9, upperLip * 0.85, lowerLip * 0.85, cheek * 0.5, chin * 0.6);
-        brightness = 0.65 + landmarkBoost * 0.55;
-        sizeMult = 1.0 + landmarkBoost * 0.45;
-
-        // Weight for dynamic speech jaw animation (lower lip + chin)
-        if (v > 0.606 && v < 0.745 && absU < 0.48) {
-          jawWeight = Math.sin(Math.min(1, (v - 0.606) / 0.06) * Math.PI * 0.5) *
-                      (1 - Math.max(0, (v - 0.69) / 0.055)) *
-                      Math.cos((absU / 0.48) * Math.PI * 0.5);
-        }
+      if (isFront && y < -0.245 && y > -0.62 && Math.abs(x) < 0.42) {
+        jawWeight =
+          smoothstep(-0.245, -0.32, y) *
+          (1 - smoothstep(-0.48, -0.62, y)) *
+          Math.cos((Math.abs(x) / 0.42) * Math.PI * 0.5);
       }
-
-      // Ears
-      const ear = gauss(v, 0.47, 0.065) * gauss(Math.abs(u), 1.52, 0.09);
-      if (ear > 0.15) {
-        x += Math.sign(u) * 0.075 * ear;
-        z -= 0.03 * ear;
-        brightness += 0.2 * ear;
-      }
-
-      // Subtle organic micro-jitter so it feels holographic rather than rigid
-      const jitter = 0.008;
-      x += (Math.random() - 0.5) * jitter;
-      y += (Math.random() - 0.5) * jitter;
-      z += (Math.random() - 0.5) * jitter;
 
       const idx = headVertices.length;
       headVertices.push({
@@ -591,179 +982,199 @@ function createHeadGeometry() {
         brightness,
         sizeMult,
         jawWeight,
-        isFront: Math.abs(u) < 1.35 && v > 0.18 && v < 0.76
+        skipDot,
+        isFront: absU < 1.48 && v < 0.96,
       });
 
-      // Connect adjacent grid points on the face for delicate biometric mesh lines
       if (iv > 0 && iu > 0) {
         const prevU = idx - 1;
-        const prevV = idx - U_STEPS;
-        if (headVertices[idx].isFront) {
+        const prevV = idx - U_COUNT;
+        const prevDiag = idx - U_COUNT - 1;
+        if (headVertices[idx].isFront && neckFade > 0.15) {
           meshEdges.push([idx, prevU]);
           meshEdges.push([idx, prevV]);
+          if ((iv + iu) % 2 === 0) meshEdges.push([idx, prevDiag]);
         }
       }
     }
   }
 
-  // Add high-detail Eyelids & Glowing Irises inside both eye sockets
-  [-1, 1].forEach(side => {
-    const cx = side * 0.265;
-    const cy = 0.285;
-    const cz = 0.735;
+  [-1, 1].forEach((side) => {
+    const cx = side * 0.255;
+    const cy = 0.245;
 
-    // Upper & lower eyelid dot contours (32 points per eye)
-    const lidCount = 32;
-    for (let i = 0; i < lidCount; i++) {
-      const a = (i / lidCount) * Math.PI * 2;
-      const ex = cx + Math.cos(a) * 0.115;
-      const isUpper = Math.sin(a) > 0;
-      const eyOffset = Math.sin(a) * 0.048;
-      const ez = cz - Math.pow(Math.cos(a), 2) * 0.035 + 0.025;
+    const ringConfigs = [
+      { rx: 0.105, ry: 0.042, count: 28, bright: 1.25, size: 1.05, isLid: true },
+      { rx: 0.132, ry: 0.062, count: 32, bright: 1.12, size: 1.02, isLid: false },
+      { rx: 0.162, ry: 0.084, count: 36, bright: 0.95, size: 0.98, isLid: false },
+      { rx: 0.195, ry: 0.108, count: 40, bright: 0.82, size: 0.94, isLid: false },
+    ];
 
-      eyeParticles.push({
-        bx: ex,
-        cy,
-        eyOffset,
-        bz: ez,
-        isUpper,
-        isIris: false,
-        side,
-        brightness: 1.15,
-        sizeMult: 1.25
-      });
-    }
+    ringConfigs.forEach((rc) => {
+      for (let i = 0; i < rc.count; i++) {
+        const a = (i / rc.count) * Math.PI * 2;
+        const cornerPinch = Math.pow(Math.abs(Math.cos(a)), 1.6);
+        const px = cx + Math.cos(a) * rc.rx;
+        const rawOffsetY = Math.sin(a) * rc.ry * (1 - 0.28 * cornerPinch);
+        const py = cy + rawOffsetY;
+        const pz = sampleFaceSurfaceZ(px, py) + (rc.isLid ? 0.016 : 0.008);
 
-    // Iris ring + pupil center
-    const irisCount = 16;
-    for (let i = 0; i < irisCount; i++) {
-      const a = (i / irisCount) * Math.PI * 2;
-      eyeParticles.push({
-        bx: cx + Math.cos(a) * 0.034,
-        cy,
-        eyOffset: Math.sin(a) * 0.034,
-        bz: cz + 0.015,
-        isUpper: false,
-        isIris: true,
-        side,
-        brightness: 1.25,
-        sizeMult: 1.15
-      });
-    }
-    // Bright pupil core
-    eyeParticles.push({
-      bx: cx,
-      cy,
-      eyOffset: 0,
-      bz: cz + 0.022,
-      isUpper: false,
-      isIris: true,
-      side,
-      brightness: 1.4,
-      sizeMult: 1.6
+        eyeDetails.push({
+          bx: px,
+          cy,
+          offsetY: rawOffsetY,
+          bz: pz,
+          isUpperLid: rc.isLid && Math.sin(a) > 0,
+          isIris: false,
+          brightness: rc.bright,
+          sizeMult: rc.size,
+        });
+      }
     });
+
+    const irisZ = sampleFaceSurfaceZ(cx, cy) + 0.006;
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2;
+      eyeDetails.push({
+        bx: cx + Math.cos(a) * 0.033,
+        cy,
+        offsetY: Math.sin(a) * 0.033,
+        bz: irisZ,
+        isUpperLid: false,
+        isIris: true,
+        brightness: 0.85,
+        sizeMult: 0.88,
+      });
+    }
   });
 
-  // Floating ambient bokeh particles in 3D space around the head
-  for (let i = 0; i < 95; i++) {
+  const mouthRings = [
+    { rx: 0.145, ry: 0.024, count: 28, bright: 1.22, size: 1.05 },
+    { rx: 0.175, ry: 0.048, count: 34, bright: 1.15, size: 1.02 },
+    { rx: 0.212, ry: 0.075, count: 38, bright: 0.92, size: 0.96 },
+  ];
+
+  mouthRings.forEach((mr) => {
+    for (let i = 0; i < mr.count; i++) {
+      const a = (i / mr.count) * Math.PI * 2;
+      const px = Math.cos(a) * mr.rx;
+      const py = -0.242 + Math.sin(a) * mr.ry;
+      const pz = sampleFaceSurfaceZ(px, py) + 0.01;
+      const isLower = Math.sin(a) < 0;
+
+      headVertices.push({
+        bx: px,
+        by: py,
+        bz: pz,
+        brightness: mr.bright,
+        sizeMult: mr.size,
+        jawWeight: isLower ? 0.78 : 0.12,
+        skipDot: false,
+        isFront: true,
+      });
+    }
+  });
+
+  for (let i = 0; i < 85; i++) {
     const theta = Math.random() * Math.PI * 2;
     const phi = Math.acos(2 * Math.random() - 1);
-    const radius = 1.05 + Math.random() * 1.15;
-    ambientParticles.push({
+    const radius = 0.95 + Math.random() * 1.15;
+    ambientBokeh.push({
       x: radius * Math.sin(phi) * Math.cos(theta),
-      y: radius * Math.cos(phi) * 1.1,
+      y: radius * Math.cos(phi) * 1.15,
       z: radius * Math.sin(phi) * Math.sin(theta),
-      size: 0.8 + Math.random() * 2.2,
-      alpha: 0.15 + Math.random() * 0.55,
-      speed: 0.3 + Math.random() * 0.7,
-      phase: Math.random() * Math.PI * 2
+      size: 1.1 + Math.random() * 2.8,
+      alpha: 0.14 + Math.random() * 0.42,
+      speed: 0.25 + Math.random() * 0.55,
+      phase: Math.random() * Math.PI * 2,
     });
   }
 }
 
-createHeadGeometry();
+buildHumanoidPointCloud();
 
-// ==========================================
-// 4. TOUCH / MOUSE INTERACTION & ANIMATION
-// ==========================================
-let targetYaw = -0.22;   // subtle three-quarter futuristic angle by default
-let targetPitch = 0.04;
-let currentYaw = -0.22;
-let currentPitch = 0.04;
+// ==========================================================
+// 5. INTERACTIVE CAMERA, GAZE & AUDIO-REACTIVE RENDER LOOP
+// ==========================================================
+let targetYaw = -0.28;
+let targetPitch = 0.03;
+let currentYaw = -0.28;
+let currentPitch = 0.03;
 let pointerX = 0;
 let pointerY = 0;
 let isDragging = false;
-let lastTouchX = 0;
-let lastTouchY = 0;
+let downX = 0;
+let downY = 0;
+let lastX = 0;
+let lastY = 0;
 
-canvas.addEventListener("pointerdown", e => {
+canvas.addEventListener("pointerdown", (e) => {
   isDragging = true;
-  lastTouchX = e.clientX;
-  lastTouchY = e.clientY;
+  downX = lastX = e.clientX;
+  downY = lastY = e.clientY;
 });
 
-window.addEventListener("pointermove", e => {
+window.addEventListener("pointermove", (e) => {
   pointerX = (e.clientX / width) * 2 - 1;
   pointerY = (e.clientY / height) * 2 - 1;
 
   if (isDragging) {
-    const dx = e.clientX - lastTouchX;
-    const dy = e.clientY - lastTouchY;
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
     targetYaw += dx * 0.0075;
-    targetPitch = Math.max(-0.55, Math.min(0.55, targetPitch + dy * 0.0055));
-    lastTouchX = e.clientX;
-    lastTouchY = e.clientY;
+    targetPitch = Math.max(-0.52, Math.min(0.52, targetPitch + dy * 0.0055));
+    lastX = e.clientX;
+    lastY = e.clientY;
   }
 });
 
-window.addEventListener("pointerup", () => {
-  isDragging = false;
-});
-
-// Tap on face to greet
-canvas.addEventListener("click", e => {
-  if (Math.abs(e.clientX - lastTouchX) < 5 && Math.abs(e.clientY - lastTouchY) < 5) {
-    unlockSpeech();
-    if (!isSpeaking) {
+window.addEventListener("pointerup", (e) => {
+  if (isDragging && Math.hypot(e.clientX - downX, e.clientY - downY) < 6) {
+    unlockAudioSystems();
+    if (!isSpeaking && !isThinking && startupGreeted) {
       speakText("At your service, Rami.");
     }
   }
+  isDragging = false;
 });
 
 let blinkAmount = 0;
-let nextBlinkTime = performance.now() + 2500;
-let speakAmount = 0;
+let nextBlink = performance.now() + 2600;
+let smoothMouth = 0;
 
 function render(now) {
   requestAnimationFrame(render);
-
   const t = now * 0.001;
 
-  // Periodic natural eye blink
-  if (now > nextBlinkTime) {
-    const blinkProgress = (now - nextBlinkTime) / 170; // 170ms blink duration
-    if (blinkProgress >= 1) {
+  if (now > nextBlink) {
+    const p = (now - nextBlink) / 165;
+    if (p >= 1) {
       blinkAmount = 0;
-      nextBlinkTime = now + 2600 + Math.random() * 3400;
+      nextBlink = now + 2800 + Math.random() * 3400;
     } else {
-      blinkAmount = Math.sin(blinkProgress * Math.PI);
+      blinkAmount = Math.sin(p * Math.PI);
     }
   }
 
-  // Smooth speech mouth movement
+  let targetMouth = 0;
   if (isSpeaking) {
-    const syllable =
-      0.5 +
-      0.32 * Math.sin(t * 17.5) +
-      0.18 * Math.sin(t * 29.0 + 1.1);
-    speakAmount += (Math.max(0.1, syllable) - speakAmount) * 0.35;
-  } else {
-    speakAmount += (0 - speakAmount) * 0.2;
+    if (analyserNode && analyserData && currentAudio && !currentAudio.paused) {
+      analyserNode.getByteFrequencyData(analyserData);
+      let sum = 0;
+      for (let i = 2; i < 28; i++) sum += analyserData[i];
+      liveAudioLevel = Math.min(1, (sum / 26) / 115);
+      targetMouth = Math.max(0.12, liveAudioLevel * 1.15);
+    } else {
+      targetMouth = Math.max(
+        0.12,
+        0.48 + 0.34 * Math.sin(t * 17) + 0.18 * Math.sin(t * 28 + 0.9)
+      );
+    }
   }
+  smoothMouth += (targetMouth - smoothMouth) * 0.32;
 
-  // Gentle idle breathing + subtle pointer gaze tracking
-  const idleYaw = Math.sin(t * 0.55) * 0.09 + pointerX * 0.22;
-  const idlePitch = Math.cos(t * 0.45) * 0.04 + pointerY * 0.14;
+  const idleYaw = Math.sin(t * 0.5) * 0.075 + pointerX * 0.2;
+  const idlePitch = Math.cos(t * 0.42) * 0.035 + pointerY * 0.12;
 
   currentYaw += (targetYaw + idleYaw - currentYaw) * 0.08;
   currentPitch += (targetPitch + idlePitch - currentPitch) * 0.08;
@@ -773,92 +1184,86 @@ function render(now) {
   const cosP = Math.cos(currentPitch);
   const sinP = Math.sin(currentPitch);
 
-  // Pure black background
   ctx.fillStyle = "#000000";
   ctx.fillRect(0, 0, width, height);
 
-  // Position head slightly above center so bottom chat dock never covers the face
-  const centerX = width * 0.5;
-  const centerY = height * 0.41;
-  const scale = Math.min(width * 0.46, height * 0.31);
-  const fov = 3.4;
+  const cx = width * 0.5;
+  const cy = height * 0.41;
+  const scale = Math.min(width * 0.47, height * 0.32);
+  const fov = 3.5;
 
   function project(x, y, z) {
-    // Rotate around Y (yaw)
     const x1 = x * cosY - z * sinY;
     const z1 = x * sinY + z * cosY;
-    // Rotate around X (pitch)
     const y2 = y * cosP - z1 * sinP;
     const z2 = y * sinP + z1 * cosP;
-
-    const perspective = fov / (fov - z2);
+    const p = fov / (fov - z2);
     return {
-      sx: centerX + x1 * scale * perspective,
-      sy: centerY - y2 * scale * perspective,
+      sx: cx + x1 * scale * p,
+      sy: cy - y2 * scale * p,
       z: z2,
-      p: perspective
+      p,
     };
   }
 
-  // Project all head vertices
-  const projectedHead = new Array(headVertices.length);
-  const drawList = [];
+  const projected = new Array(headVertices.length);
+  const renderDots = [];
 
   for (let i = 0; i < headVertices.length; i++) {
     const v = headVertices[i];
-    const dy = -speakAmount * 0.095 * v.jawWeight;
-    const dz = -speakAmount * 0.025 * v.jawWeight;
-    const proj = project(v.bx, v.by + dy, v.bz + dz);
-    projectedHead[i] = proj;
+    const dy = -smoothMouth * 0.085 * v.jawWeight;
+    const dz = -smoothMouth * 0.022 * v.jawWeight;
+    const pt = project(v.bx, v.by + dy, v.bz + dz);
+    projected[i] = pt;
 
-    drawList.push({
-      sx: proj.sx,
-      sy: proj.sy,
-      z: proj.z,
-      p: proj.p,
-      brightness: v.brightness + (v.jawWeight * speakAmount * 0.35),
-      sizeMult: v.sizeMult
-    });
+    if (!v.skipDot && v.brightness > 0.04) {
+      renderDots.push({
+        sx: pt.sx,
+        sy: pt.sy,
+        z: pt.z,
+        p: pt.p,
+        brightness: v.brightness + v.jawWeight * smoothMouth * 0.25,
+        sizeMult: v.sizeMult,
+      });
+    }
   }
 
-  // Project eyes (blinking eyelids + tracking irises)
-  const eyeLookX = pointerX * 0.016;
-  const eyeLookY = -pointerY * 0.012;
+  const lookX = pointerX * 0.012;
+  const lookY = -pointerY * 0.009;
 
-  for (let i = 0; i < eyeParticles.length; i++) {
-    const ep = eyeParticles[i];
-    let x = ep.bx;
-    let y = ep.cy + ep.eyOffset;
-    let z = ep.bz;
+  for (let i = 0; i < eyeDetails.length; i++) {
+    const ed = eyeDetails[i];
+    let x = ed.bx;
+    let y = ed.cy + ed.offsetY;
+    let z = ed.bz;
 
-    if (ep.isIris) {
-      x += eyeLookX;
-      y += eyeLookY;
-    } else if (ep.isUpper) {
-      y = ep.cy + ep.eyOffset * (1 - blinkAmount * 0.92);
+    if (ed.isIris) {
+      x += lookX;
+      y += lookY;
+    } else if (ed.isUpperLid) {
+      y = ed.cy + ed.offsetY * (1 - blinkAmount * 0.92);
     }
 
-    const proj = project(x, y, z);
-    drawList.push({
-      sx: proj.sx,
-      sy: proj.sy,
-      z: proj.z,
-      p: proj.p,
-      brightness: ep.brightness * (ep.isIris ? (1 - blinkAmount * 0.85) : 1),
-      sizeMult: ep.sizeMult
+    const pt = project(x, y, z);
+    renderDots.push({
+      sx: pt.sx,
+      sy: pt.sy,
+      z: pt.z,
+      p: pt.p,
+      brightness: ed.brightness * (ed.isIris ? 1 - blinkAmount * 0.9 : 1),
+      sizeMult: ed.sizeMult,
     });
   }
 
-  // 1. Draw delicate translucent biometric mesh lines on front-facing triangles
-  ctx.lineWidth = 0.65;
+  ctx.lineWidth = 0.6;
   for (let i = 0; i < meshEdges.length; i++) {
     const [aIdx, bIdx] = meshEdges[i];
-    const a = projectedHead[aIdx];
-    const b = projectedHead[bIdx];
+    const a = projected[aIdx];
+    const b = projected[bIdx];
     const avgZ = (a.z + b.z) * 0.5;
-    if (avgZ > -0.15) {
-      const lineAlpha = Math.min(0.14, Math.max(0, (avgZ + 0.15) * 0.13));
-      ctx.strokeStyle = `rgba(255, 255, 255, ${lineAlpha.toFixed(3)})`;
+    if (avgZ > -0.25) {
+      const alpha = Math.min(0.13, Math.max(0, (avgZ + 0.25) * 0.12));
+      ctx.strokeStyle = `rgba(255, 255, 255, ${alpha.toFixed(3)})`;
       ctx.beginPath();
       ctx.moveTo(a.sx, a.sy);
       ctx.lineTo(b.sx, b.sy);
@@ -866,48 +1271,74 @@ function render(now) {
     }
   }
 
-  // 2. Sort particles back-to-front for authentic 3D depth & bokeh glow
-  drawList.sort((a, b) => a.z - b.z);
+  renderDots.sort((a, b) => a.z - b.z);
 
-  for (let i = 0; i < drawList.length; i++) {
-    const pt = drawList[i];
-    // Depth normalization (-0.9 back of head to +1.0 nose tip)
-    const depthNorm = Math.max(0, Math.min(1, (pt.z + 0.9) / 1.9));
-    const alpha = Math.min(1, (0.14 + Math.pow(depthNorm, 1.35) * 0.86) * pt.brightness);
-    const radius = Math.max(0.75, (0.95 + depthNorm * 1.45) * pt.p * pt.sizeMult);
+  const focalZ = 0.55;
 
-    // Soft outer halo for near/bright dots or deep bokeh blur for back-edge dots
-    if (depthNorm > 0.68 || depthNorm < 0.22) {
-      const haloRadius = radius * (depthNorm > 0.68 ? 2.5 : 2.9);
-      const haloAlpha = alpha * (depthNorm > 0.68 ? 0.22 : 0.14);
+  for (let i = 0; i < renderDots.length; i++) {
+    const d = renderDots[i];
+    const depthNorm = Math.max(0, Math.min(1, (d.z + 0.85) / 1.8));
+    const focalDist = Math.abs(d.z - focalZ);
+
+    const bokehBlur = Math.max(0, focalDist - 0.35);
+    const coreRadius = Math.max(0.7, (0.88 + depthNorm * 1.15) * d.p * d.sizeMult);
+    const alpha = Math.min(
+      1,
+      (0.14 + Math.pow(depthNorm, 1.3) * 0.86) * d.brightness * (1 - bokehBlur * 0.35)
+    );
+
+    if (bokehBlur > 0.05 || depthNorm > 0.72) {
+      const haloRadius = coreRadius * (1.8 + bokehBlur * 3.2);
+      const haloAlpha = alpha * (bokehBlur > 0.05 ? 0.24 : 0.18);
       ctx.fillStyle = `rgba(255, 255, 255, ${haloAlpha.toFixed(3)})`;
       ctx.beginPath();
-      ctx.arc(pt.sx, pt.sy, haloRadius, 0, Math.PI * 2);
+      ctx.arc(d.sx, d.sy, haloRadius, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // Crisp white core dot
     ctx.fillStyle = `rgba(255, 255, 255, ${alpha.toFixed(3)})`;
     ctx.beginPath();
-    ctx.arc(pt.sx, pt.sy, radius, 0, Math.PI * 2);
+    ctx.arc(d.sx, d.sy, coreRadius, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  // 3. Ambient floating dust particles around the hologram
-  for (let i = 0; i < ambientParticles.length; i++) {
-    const ap = ambientParticles[i];
-    const driftY = Math.sin(t * ap.speed + ap.phase) * 0.08;
-    const proj = project(ap.x, ap.y + driftY, ap.z);
-    const pulse = 0.65 + 0.35 * Math.sin(t * 1.8 + ap.phase);
-    const a = ap.alpha * pulse;
+  for (let i = 0; i < ambientBokeh.length; i++) {
+    const ap = ambientBokeh[i];
+    const drift = Math.sin(t * ap.speed + ap.phase) * 0.07;
+    const pt = project(ap.x, ap.y + drift, ap.z);
+    const a = ap.alpha * (0.65 + 0.35 * Math.sin(t * 1.6 + ap.phase));
     ctx.fillStyle = `rgba(255, 255, 255, ${a.toFixed(3)})`;
     ctx.beginPath();
-    ctx.arc(proj.sx, proj.sy, ap.size * proj.p, 0, Math.PI * 2);
+    ctx.arc(pt.sx, pt.sy, ap.size * pt.p, 0, Math.PI * 2);
     ctx.fill();
   }
 }
 
 requestAnimationFrame(render);
+
+// ==========================================================
+// 6. STARTUP VOICE GREETING ON APP OPEN
+// ==========================================================
+const STARTUP_GREETING = "Hello sir Rami, what can I do for you?";
+
+function playStartupGreeting(fromInteraction = false, target = null) {
+  if (startupGreeted || !voiceEnabled) return;
+  if (fromInteraction && target && target.closest("button, textarea")) {
+    startupGreeted = true;
+    return;
+  }
+  unlockAudioSystems();
+  if (fromInteraction) startupGreeted = true;
+  speakText(STARTUP_GREETING, true);
+}
+
+window.addEventListener("load", () => {
+  setTimeout(() => playStartupGreeting(false), 300);
+});
+
+["touchstart", "click"].forEach((evt) => {
+  window.addEventListener(evt, (e) => playStartupGreeting(true, e.target), { once: true });
+});
 </script>
 
 </body>
