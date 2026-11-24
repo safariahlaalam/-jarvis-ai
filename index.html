@@ -87,6 +87,7 @@ h2 {
   border-radius: 12px;
   background: #0a1726;
   line-height: 1.5;
+  white-space: pre-wrap;
 }
 
 .controls {
@@ -114,6 +115,7 @@ button {
   background: #103d5a;
   color: white;
   font-size: 16px;
+  cursor: pointer;
 }
 
 button:active {
@@ -168,6 +170,8 @@ footer {
 
 <script>
 
+const WORKER_URL = "https://jarvis-worker.5rk2sbwzjp.workers.dev/";
+
 function addMessage(sender, text) {
   const box = document.getElementById("messages");
 
@@ -184,9 +188,10 @@ function addMessage(sender, text) {
   box.appendChild(message);
 
   message.scrollIntoView({ behavior: "smooth" });
+  return content;
 }
 
-function sendMessage() {
+async function sendMessage() {
   const input = document.getElementById("input");
   const text = input.value.trim();
 
@@ -195,12 +200,27 @@ function sendMessage() {
   addMessage("YOU", text);
   input.value = "";
 
-  setTimeout(() => {
-    addMessage(
-      "JARVIS",
-      "I have received your instruction. My intelligence engine will be connected in our next development stage."
-    );
-  }, 600);
+  const replyContent = addMessage("JARVIS", "Processing...");
+
+  try {
+    const response = await fetch(WORKER_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ prompt: text })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Server error (" + response.status + ")");
+    }
+
+    replyContent.textContent = data.reply;
+  } catch (err) {
+    replyContent.textContent = "Error: " + err.message;
+  }
 }
 
 function listen() {
