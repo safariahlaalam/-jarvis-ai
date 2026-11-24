@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#050b16">
 
-<title>JARVIS AI</title>
+<title>RAMI AI</title>
 
 <style>
 * {
@@ -133,7 +133,7 @@ footer {
 <body>
 
 <header>
-  <div class="logo">J.A.R.V.I.S</div>
+  <div class="logo">R.A.M.I</div>
   <div class="status">● SYSTEM ONLINE</div>
 </header>
 
@@ -146,7 +146,7 @@ footer {
 
   <div id="messages">
     <div class="message">
-      <strong>JARVIS:</strong><br>
+      <strong>RAMI:</strong><br>
       Good day. My interface is operational.
       Awaiting your instructions.
     </div>
@@ -155,7 +155,7 @@ footer {
   <div class="controls">
     <input
       id="input"
-      placeholder="Talk to JARVIS..."
+      placeholder="Talk to RAMI..."
       autocomplete="off"
     >
     <button onclick="sendMessage()">Send</button>
@@ -165,7 +165,7 @@ footer {
 </main>
 
 <footer>
-  JARVIS AI — DEVELOPMENT VERSION 1.0
+  RAMI AI — DEVELOPMENT VERSION 1.0
 </footer>
 
 <script>
@@ -197,10 +197,10 @@ async function sendMessage() {
 
   if (!text) return;
 
-  addMessage("YOU", text);
+  addMessage("RAMI", text);
   input.value = "";
 
-  const replyContent = addMessage("JARVIS", "Processing...");
+  const replyContent = addMessage("RAMI AI", "Processing...");
 
   try {
     const response = await fetch(WORKER_URL, {
@@ -230,7 +230,7 @@ function listen() {
 
   if (!SpeechRecognition) {
     addMessage(
-      "JARVIS",
+      "RAMI AI",
       "Voice recognition is not supported by this browser. Please use text input for now."
     );
     return;
@@ -247,7 +247,7 @@ function listen() {
   };
 
   recognition.onerror = function() {
-    addMessage("JARVIS", "I couldn't access voice recognition.");
+    addMessage("RAMI AI", "I couldn't access voice recognition.");
   };
 }
 
