@@ -12,12 +12,28 @@ from app.errors import not_configured_response
 from app.orchestrator import JarvisOrchestrator, _clean_text
 from app.schemas import ChatRequest
 from app.security import declare_openapi_auth
+from app.services.file_builder import extract_and_build_file
+
 
 router = APIRouter(dependencies=[Depends(declare_openapi_auth)])
 
 DEFAULT_BASE_URL = "https://api.groq.com/openai/v1"
 DEFAULT_MODEL = "qwen/qwen3.8-27b"
 DEFAULT_SYSTEM_PROMPT = "You are Jarvis, a concise, helpful personal AI assistant."
+
+FILE_GENERATION_INSTRUCTION = (
+    "When the user asks for a file, report, document, plan, or code, wrap the complete file inside "
+    "[FILE:exact_filename.ext]...[/FILE] tags and write a brief summary outside the tags. "
+    "For .pdf files: start with [STYLE:dark] if the user asks for dark/cyber/RAMI style or [STYLE:executive] for clean white business style, "
+    "followed by '# Document Title', '## Section Headings', '> Key Highlight Callouts', '- Bullet points', and '| Markdown | Tables |' "
+    "tailored to the exact layout and sections the user requested. "
+    "For .html files: generate a complete, modern, responsive single-file HTML5/CSS3 design with clean typography, cards, and color styling."
+)
+
+_FILE_INTENT_RE = re.compile(
+    r"\b(file|pdf|html|csv|json|script|code|document|report|plan|proposal|export|download|send me|make me|create a)\b",
+    re.IGNORECASE,
+)
 
 
 class TTSRequest(BaseModel):
@@ -66,9 +82,11 @@ async def create_chat_completion(payload: ChatRequest, request: Request):
             request_id=request.state.request_id,
         )
 
-    system_prompt = (
+    base_prompt = (
         os.getenv("JARVIS_SYSTEM_PROMPT", "").strip() or DEFAULT_SYSTEM_PROMPT
     )
+    system_prompt = f"{base_prompt}\n\n{FILE_GENERATION_INSTRUCTION}"
+
     messages = [{"role": "system", "content": system_prompt}]
     messages.extend(
         {"role": msg.role, "content": msg.content} for msg in payload.history
@@ -84,7 +102,8 @@ async def create_chat_completion(payload: ChatRequest, request: Request):
         raise HTTPException(status_code=502, detail=f"AI provider error: {exc}") from exc
 
     choice = completion.choices[0] if completion.choices else None
-    reply = _clean_text((choice.message.content if choice and choice.message else "") or "")
+    raw_reply = _clean_text((choice.message.content if choice and choice.message else "") or "")
+    reply, file_payload = extract_and_build_file(raw_reply)
 
     usage = None
     if completion.usage is not None:
@@ -96,6 +115,7 @@ async def create_chat_completion(payload: ChatRequest, request: Request):
 
     return {
         "reply": reply,
+        "file": file_payload,
         "model": completion.model or model,
         "usage": usage,
     }
@@ -113,10 +133,25 @@ async def run_multi_agent(payload: ChatRequest, request: Request):
         )
 
     history = [{"role": msg.role, "content": msg.content} for msg in payload.history]
+    agent_prompt = payload.prompt
+    if _FILE_INTENT_RE.search(payload.prompt):
+        agent_prompt = f"{payload.prompt}\n\n[Formatting rule: {FILE_GENERATION_INSTRUCTION}]"
+
     try:
-        return await orchestrator.run(prompt=payload.prompt, history=history)
+        result = await orchestrator.run(prompt=agent_prompt, history=history)
     except OpenAIError as exc:
         raise HTTPException(status_code=502, detail=f"Agent provider error: {exc}") from exc
+
+    if isinstance(result, dict):
+        for key in ("reply", "response", "message"):
+            if isinstance(result.get(key), str) and result[key]:
+                cleaned_text, file_payload = extract_and_build_file(result[key])
+                result[key] = cleaned_text
+                if file_payload is not None:
+                    result["file"] = file_payload
+                break
+
+    return result
 
 
 @router.post("/api/tts")
