@@ -923,12 +923,315 @@ addEventListener('pointerdown',e=>{
  if(S.token&&S.speak&&!e.target.closest('button,textarea,input,select,.drawer,.modal')){audio();speak(t('hi'))}
 },{once:true});
 setMode(S.mode);applyUI();setState(S.token?'idle':'error');addMsg('ai',t('hi'));
-requestAnimationFrame(frame);
- 
+</script>
 
-</script> </script>
+<!-- RAMI HOLOGRAPHIC FACE ENGINE v2 -->
+<style>
+  html, body {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
 
-<!-- PASTE THE PERMANENT ZERO-LAG FACE ENGINE HERE -->
+  button, input, textarea, [role="button"] {
+    touch-action: manipulation;
+  }
 
+  /* Hide legacy face canvas completely */
+  canvas:not(#rami-face-canvas) {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  /* Centered stage locked cleanly in the open middle gap */
+  #rami-face-stage {
+    position: fixed;
+    top: 112px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: clamp(220px, 66vw, 300px);
+    height: clamp(220px, 66vw, 300px);
+    aspect-ratio: 1 / 1;
+    pointer-events: none;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    contain: strict;
+  }
+
+  #rami-face-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    pointer-events: none;
+  }
+</style>
+
+<div id="rami-face-stage" aria-hidden="true">
+  <canvas id="rami-face-canvas"></canvas>
+</div>
+
+<script>
+(function () {
+  // Neutralize any legacy global frame loop or canvas
+  if (typeof window.frame === "function") {
+    window.frame = function () {};
+  }
+  document.querySelectorAll("canvas:not(#rami-face-canvas)").forEach((oldCanvas) => {
+    oldCanvas.width = 0;
+    oldCanvas.height = 0;
+  });
+
+  const canvas = document.getElementById("rami-face-canvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d", { alpha: true, desynchronized: true });
+
+  const isMobile = window.innerWidth < 768;
+  const ROWS = isMobile ? 26 : 34;
+  const COLS = isMobile ? 28 : 36;
+
+  // Pre-render one glowing sprite (eliminates slow per-particle gradients)
+  const sprite = document.createElement("canvas");
+  sprite.width = 24;
+  sprite.height = 24;
+  const sctx = sprite.getContext("2d");
+  const grad = sctx.createRadialGradient(12, 12, 0.5, 12, 12, 11);
+  grad.addColorStop(0, "rgba(224, 242, 254, 1)");
+  grad.addColorStop(0.35, "rgba(56, 189, 248, 0.85)");
+  grad.addColorStop(1, "rgba(14, 165, 233, 0)");
+  sctx.fillStyle = grad;
+  sctx.fillRect(0, 0, 24, 24);
+
+  // Build clean, symmetrical front-hemisphere holographic face mesh
+  const mesh = [];
+  const edges = [];
+
+  function sampleFace(u, v) {
+    const cosV = Math.cos(v * 0.94);
+    const sinV = Math.sin(v);
+    const sinU = Math.sin(u);
+    const cosU = Math.cos(u);
+
+    let rx = 0.68 * cosV;
+    const ry = 0.92 * sinV;
+    let rz = 0.74 * cosV * Math.cos(u * 0.35);
+
+    if (v < -0.04) {
+      const jawT = Math.min(1, (-v - 0.04) / (Math.PI * 0.44));
+      rx *= 1 - 0.36 * Math.pow(jawT, 1.35);
+      rz *= 1 - 0.16 * Math.pow(jawT, 1.4);
+    }
+
+    let x = rx * sinU;
+    const y = ry;
+    let z = rz * cosU;
+
+    // Brow ridge
+    const brow = Math.exp(-Math.pow((v - 0.20) / 0.075, 2)) * Math.exp(-Math.pow(u / 0.58, 2));
+    z += 0.055 * brow;
+
+    // Eye socket recesses
+    const eyeV = Math.exp(-Math.pow((v - 0.09) / 0.075, 2));
+    const eyeL = Math.exp(-Math.pow((u + 0.27) / 0.13, 2));
+    const eyeR = Math.exp(-Math.pow((u - 0.27) / 0.13, 2));
+    z -= 0.075 * eyeV * (eyeL + eyeR);
+
+    // Nose bridge & tip
+    const noseBridge = Math.exp(-Math.pow((v - 0.02) / 0.15, 2)) * Math.exp(-Math.pow(u / 0.085, 2));
+    const noseTip = Math.exp(-Math.pow((v + 0.07) / 0.055, 2)) * Math.exp(-Math.pow(u / 0.095, 2));
+    z += 0.085 * noseBridge + 0.075 * noseTip;
+
+    // Cheekbones
+    const cheekV = Math.exp(-Math.pow((v + 0.03) / 0.11, 2));
+    const cheekU = Math.exp(-Math.pow((Math.abs(u) - 0.42) / 0.15, 2));
+    z += 0.04 * cheekV * cheekU;
+    x += Math.sign(u) * 0.022 * cheekV * cheekU;
+
+    // Upper & lower lips
+    const lipU = Math.exp(-Math.pow(u / 0.19, 2));
+    const upperLip = Math.exp(-Math.pow((v + 0.21) / 0.032, 2));
+    const lowerLip = Math.exp(-Math.pow((v + 0.27) / 0.036, 2));
+    z += (0.045 * upperLip + 0.042 * lowerLip) * lipU;
+
+    // Defined chin
+    const chin = Math.exp(-Math.pow((v + 0.43) / 0.09, 2)) * Math.exp(-Math.pow(u / 0.22, 2));
+    z += 0.055 * chin;
+
+    const isLowerLip = v < -0.23 && v > -0.34 && Math.abs(u) < 0.22;
+    return { x, y, z, isLowerLip };
+  }
+
+  const uMin = -Math.PI * 0.56;
+  const uMax = Math.PI * 0.56;
+  const vMin = -Math.PI * 0.47;
+  const vMax = Math.PI * 0.45;
+
+  for (let r = 0; r <= ROWS; r++) {
+    const v = vMin + (r / ROWS) * (vMax - vMin);
+    for (let c = 0; c <= COLS; c++) {
+      const u = uMin + (c / COLS) * (uMax - uMin);
+      mesh.push(sampleFace(u, v));
+    }
+  }
+
+  const stride = COLS + 1;
+  for (let r = 0; r <= ROWS; r++) {
+    for (let c = 0; c <= COLS; c++) {
+      const idx = r * stride + c;
+      if (c < COLS) edges.push([idx, idx + 1]);
+      if (r < ROWS) edges.push([idx, idx + stride]);
+    }
+  }
+
+  // Almond eye outlines & glowing irises
+  const eyeCoords = [];
+  [-0.27, 0.27].forEach((eu) => {
+    const center = sampleFace(eu, 0.09);
+    for (let k = 0; k < 14; k++) {
+      const a = (k / 14) * Math.PI * 2;
+      eyeCoords.push({
+        x: center.x + Math.cos(a) * 0.095,
+        y: center.y + Math.sin(a) * 0.042,
+        z: center.z + 0.032,
+        bright: false
+      });
+    }
+    for (let k = 0; k < 10; k++) {
+      const a = (k / 10) * Math.PI * 2;
+      eyeCoords.push({
+        x: center.x + Math.cos(a) * 0.036,
+        y: center.y + Math.sin(a) * 0.036,
+        z: center.z + 0.038,
+        bright: true
+      });
+    }
+  });
+
+  // Strict 1:1 square backing resolution
+  let size = 280;
+  function resize() {
+    const stage = document.getElementById("rami-face-stage");
+    if (!stage) return;
+    size = Math.round(stage.clientWidth || 280);
+    const dpr = isMobile ? 1.5 : Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(size * dpr);
+    canvas.height = Math.round(size * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+  window.addEventListener("resize", resize, { passive: true });
+
+  // Damped pointer look-at
+  let targetYaw = 0, targetPitch = 0;
+  let yaw = 0, pitch = 0;
+
+  window.addEventListener("pointermove", (e) => {
+    targetYaw = ((e.clientX / window.innerWidth) * 2 - 1) * 0.26;
+    targetPitch = ((e.clientY / window.innerHeight) * 2 - 1) * 0.15;
+  }, { passive: true });
+
+  const proj = new Array(mesh.length);
+  let lastTime = 0;
+  const interval = isMobile ? 32 : 16;
+
+  function render(now) {
+    requestAnimationFrame(render);
+    if (document.hidden) return;
+    const active = document.activeElement;
+    if (isMobile && active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA")) return;
+
+    if (now - lastTime < interval) return;
+    lastTime = now;
+
+    const t = now * 0.001;
+    const isSpeaking = document.body.innerText.includes("SPEAKING");
+    const speechPulse = isSpeaking ? (0.5 + 0.5 * Math.sin(t * 14)) * 0.035 : 0;
+
+    const idleYaw = Math.sin(t * 0.65) * 0.12;
+    const idlePitch = Math.cos(t * 0.45) * 0.05;
+    yaw += (targetYaw + idleYaw - yaw) * 0.06;
+    pitch += (targetPitch + idlePitch - pitch) * 0.06;
+
+    const cosY = Math.cos(yaw), sinY = Math.sin(yaw);
+    const cosX = Math.cos(pitch), sinX = Math.sin(pitch);
+
+    const cx = size * 0.5;
+    const cy = size * 0.51;
+    const unit = size * 0.40;
+
+    ctx.clearRect(0, 0, size, size);
+
+    // Outer HUD ring
+    const hudR = size * 0.46;
+    ctx.beginPath();
+    ctx.arc(cx, cx, hudR, 0, Math.PI * 2);
+    ctx.strokeStyle = isSpeaking ? "rgba(56, 189, 248, 0.28)" : "rgba(56, 189, 248, 0.12)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Rotating HUD arc
+    ctx.beginPath();
+    ctx.arc(cx, cx, hudR - 6, t * 0.35, t * 0.35 + Math.PI * 0.45);
+    ctx.strokeStyle = "rgba(125, 211, 252, 0.32)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Project mesh vertices
+    for (let i = 0; i < mesh.length; i++) {
+      const p = mesh[i];
+      const py = p.isLowerLip ? p.y - speechPulse : p.y;
+      const x1 = p.x * cosY - p.z * sinY;
+      const z1 = p.z * cosY + p.x * sinY;
+      const y2 = py * cosX - z1 * sinX;
+      const z2 = z1 * cosX + py * sinX;
+      const fov = 2.5 / (2.5 - z2);
+      proj[i] = { x: cx + x1 * fov * unit, y: cy - y2 * fov * unit, z: z2 };
+    }
+
+    // Single batched wireframe stroke
+    ctx.beginPath();
+    ctx.strokeStyle = "rgba(56, 189, 248, 0.16)";
+    ctx.lineWidth = 0.75;
+    for (let i = 0; i < edges.length; i++) {
+      const a = proj[edges[i][0]];
+      const b = proj[edges[i][1]];
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+    }
+    ctx.stroke();
+
+    // Glowing mesh nodes
+    for (let i = 0; i < proj.length; i++) {
+      const pt = proj[i];
+      const depth = Math.max(0.18, Math.min(1, (pt.z + 0.5) * 0.85));
+      ctx.globalAlpha = depth * 0.82;
+      const s = 2.6 + depth * 2.4;
+      ctx.drawImage(sprite, pt.x - s * 0.5, pt.y - s * 0.5, s, s);
+    }
+
+    // Crisp eye apertures & irises
+    for (let i = 0; i < eyeCoords.length; i++) {
+      const e = eyeCoords[i];
+      const x1 = e.x * cosY - e.z * sinY;
+      const z1 = e.z * cosY + e.x * sinY;
+      const y2 = e.y * cosX - z1 * sinX;
+      const z2 = z1 * cosX + e.y * sinX;
+      const fov = 2.5 / (2.5 - z2);
+      const ex = cx + x1 * fov * unit;
+      const ey = cy - y2 * fov * unit;
+      ctx.globalAlpha = e.bright ? 1 : 0.75;
+      const s = e.bright ? 6.5 : 4.2;
+      ctx.drawImage(sprite, ex - s * 0.5, ey - s * 0.5, s, s);
+    }
+
+    ctx.globalAlpha = 1;
+  }
+
+  requestAnimationFrame(render);
+})();
+</script>
 </body></html>
- </body></html>
+
