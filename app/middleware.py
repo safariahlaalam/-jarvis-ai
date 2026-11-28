@@ -48,7 +48,7 @@ def register_middlewares(app: FastAPI, settings: Settings) -> None:
     # Registered last so it wraps everything as the outermost middleware.
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origins,
+        allow_origins=list({*settings.cors_origins, "https://afariahlaalam.github.io"}),
         allow_credentials=False,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["X-Service-Token", "Content-Type", "X-Request-ID"],
