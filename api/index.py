@@ -1,8 +1,7 @@
+import json
 import os
 import sys
 import traceback
-from fastapi import FastAPI
-from fastapi.responses import JSONResponse
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ROOT_DIR not in sys.path:
@@ -10,16 +9,15 @@ if ROOT_DIR not in sys.path:
 
 try:
     from app.main import app
-except Exception as exc:
-    app = FastAPI()
+except Exception:
+    from http.server import BaseHTTPRequestHandler
 
-    @app.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"])
-    async def startup_error_report(full_path: str):
-        return JSONResponse(
-            status_code=500,
-            content={
-                "error_type": type(exc).__name__,
-                "error_message": str(exc),
-                "traceback": traceback.format_exc().splitlines(),
-            },
-        )
+    ERROR_TRACE = traceback.format_exc()
+
+    class handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(500)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            payload = json.dumps({"error": ERROR_TRACE}, ensure_ascii=False, indent=2)
+            self.wfile.write(payload.encode("utf-8"))
