@@ -924,4 +924,59 @@ addEventListener('pointerdown',e=>{
 },{once:true});
 setMode(S.mode);applyUI();setState(S.token?'idle':'error');addMsg('ai',t('hi'));
 requestAnimationFrame(frame);
+ <!-- Mobile Face Shape, Lag & Movement Fix -->
+<style>
+  canvas {
+    pointer-events: none !important;
+    display: block !important;
+    width: min(85vw, 360px) !important;
+    height: min(85vw, 360px) !important;
+    aspect-ratio: 1 / 1 !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+</style>
+<script>
+  (function () {
+    const isMobile = window.innerWidth < 768;
+
+    // 1. Disable expensive per-particle glow blur on mobile GPUs
+    if (isMobile && window.CanvasRenderingContext2D) {
+      Object.defineProperty(CanvasRenderingContext2D.prototype, "shadowBlur", {
+        get: function () { return 0; },
+        set: function () {}
+      });
+    }
+
+    // 2. Cap mobile animation to 30 FPS so UI taps and scrolling stay responsive
+    const origRAF = window.requestAnimationFrame.bind(window);
+    let lastFrame = 0;
+    window.requestAnimationFrame = function (cb) {
+      return origRAF(function (now) {
+        if (isMobile && now - lastFrame < 33) {
+          window.requestAnimationFrame(cb);
+          return;
+        }
+        lastFrame = now;
+        cb(now);
+      });
+    };
+
+    // 3. Lock canvas backing buffer to a 1:1 square so the face is never stretched
+    function fixCanvasProportions() {
+      const side = Math.round(Math.min(window.innerWidth * 0.85, 360));
+      const dpr = isMobile ? 1.25 : Math.min(window.devicePixelRatio || 1, 2);
+      document.querySelectorAll("canvas").forEach(function (c) {
+        c.width = Math.round(side * dpr);
+        c.height = Math.round(side * dpr);
+      });
+    }
+
+    fixCanvasProportions();
+    window.dispatchEvent(new Event("resize"));
+  })();
+</script>
+
 </script></body></html>
