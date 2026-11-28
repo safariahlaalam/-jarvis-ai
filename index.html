@@ -95,10 +95,8 @@ header .b:active{transform:rotate(80deg) scale(.88)}
 .seg{animation-delay:.2s}.comp{animation-delay:.26s}
 .list>:nth-child(n+4){animation-delay:.2s}
 .chip{animation:up .5s backwards}
-.chip:nth-child(2){animation-delay:.05s}
-.chip:nth-child(3){animation-delay:.1s}
-.chip:nth-child(4){animation-delay:.15s}
-.chip:nth-child(5){animation-delay:.2s}
+.chip:nth-child(2){animation-delay:.05s}.chip:nth-child(3){animation-delay:.1s}
+.chip:nth-child(4){animation-delay:.15s}.chip:nth-child(5){animation-delay:.2s}
 .seg button.on{box-shadow:0 0 14px -4px var(--acc) inset}
 .ib.send.ready{box-shadow:0 0 18px var(--acc);animation:beat 1.5s ease-in-out infinite}
 @keyframes beat{50%{transform:scale(1.1)}}
@@ -131,8 +129,8 @@ body.listen #mic::before{animation:ring 1.2s ease-out infinite}
    <button class="b g" onclick="openD('dProj')">▦ <span data-i="projects"></span></button>
   </div>
   <div class="seg g">
-   <button data-m="agent" title="/api/agent" onclick="setMode('agent')" data-i="agent"></button>
-   <button data-m="chat" title="/api/chat" onclick="setMode('chat')" data-i="chat"></button>
+   <button data-m="agent" onclick="setMode('agent')" data-i="agent"></button>
+   <button data-m="chat" onclick="setMode('chat')" data-i="chat"></button>
   </div>
   <div class="comp g">
    <textarea id="inp" rows="1" dir="auto" data-ph="ph"></textarea>
@@ -170,10 +168,8 @@ body.listen #mic::before{animation:ring 1.2s ease-out infinite}
  <div class="fld"><input class="in" id="pd" data-ph="pdesc"></div>
  <div style="display:flex;gap:8px">
   <select id="ps" style="flex:1">
-   <option>planning</option>
-   <option selected>active</option>
-   <option>paused</option>
-   <option>done</option>
+   <option>planning</option><option selected>active</option>
+   <option>paused</option><option>done</option>
   </select>
   <button class="b g" style="color:var(--acc)" onclick="mkProj()" data-i="create"></button>
  </div>
@@ -192,12 +188,10 @@ body.listen #mic::before{animation:ring 1.2s ease-out infinite}
   <button data-t="u" data-i="ui"></button>
  </div>
  <div class="pn" data-p="c">
-  <label>
-   <span data-i="base"></span>
+  <label><span data-i="base"></span>
    <div class="fld"><input class="in" data-k="base" dir="ltr" autocapitalize="off"></div>
   </label>
-  <label>
-   <span data-i="token"></span>
+  <label><span data-i="token"></span>
    <div class="fld" style="display:flex">
     <input class="in" id="tok" type="password" data-k="token" dir="ltr" autocapitalize="off">
     <button class="rp" onclick="const i=$('#tok');i.type=i.type==='password'?'text':'password'">👁</button>
@@ -206,43 +200,30 @@ body.listen #mic::before{animation:ring 1.2s ease-out infinite}
   <button class="b g" style="color:var(--acc);justify-content:center" onclick="testConn()" data-i="test"></button>
  </div>
  <div class="pn" data-p="a" hidden>
-  <label>
-   <span data-i="defMode"></span>
+  <label><span data-i="defMode"></span>
    <select data-k="mode">
     <option value="agent">Multi-Agent (/api/agent)</option>
     <option value="chat">Fast Chat (/api/chat)</option>
    </select>
   </label>
-  <label class="ck">
-   <span data-i="expand"></span>
-   <input type="checkbox" data-k="expand">
-  </label>
+  <label class="ck"><span data-i="expand"></span><input type="checkbox" data-k="expand"></label>
  </div>
  <div class="pn" data-p="v" hidden>
-  <label class="ck">
-   <span data-i="auto"></span>
-   <input type="checkbox" data-k="speak">
-  </label>
-  <label>
-   <span data-i="voiceSel"></span>
-   <select data-k="voice" id="vsel"></select>
-  </label>
-  <label>
-   <span><span data-i="rate"></span>: <b id="rv"></b>%</span>
+  <label class="ck"><span data-i="auto"></span><input type="checkbox" data-k="speak"></label>
+  <label><span data-i="voiceSel"></span><select data-k="voice" id="vsel"></select></label>
+  <label><span><span data-i="rate"></span>: <b id="rv"></b>%</span>
    <input type="range" min="-30" max="30" step="5" data-k="rate">
   </label>
   <button class="b g" style="color:var(--acc);justify-content:center" onclick="testVoice()" data-i="tvoice"></button>
  </div>
  <div class="pn" data-p="u" hidden>
-  <label>
-   <span data-i="lang"></span>
+  <label><span data-i="lang"></span>
    <select data-k="lang">
     <option value="en">English (LTR)</option>
     <option value="ar">العربية (RTL)</option>
    </select>
   </label>
-  <label>
-   <span data-i="accent"></span>
+  <label><span data-i="accent"></span>
    <select data-k="accent">
     <option value="#38BDF8">Bioluminescent Cyan</option>
     <option value="#E8C987">Champagne Gold</option>
@@ -253,6 +234,10 @@ body.listen #mic::before{animation:ring 1.2s ease-out infinite}
 </section>
 
 <script>
+window.onerror=function(m,u,l){
+ var s=document.getElementById('st');
+ if(s)s.textContent='ERR:'+l+' '+m;
+};
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
 const el=(t,c,x)=>{
@@ -264,15 +249,8 @@ const el=(t,c,x)=>{
 
 /* ===== settings + i18n ===== */
 const D={
- base:'https://logosiqai.vercel.app',
- token:'',
- mode:'agent',
- expand:true,
- speak:true,
- voice:'',
- rate:0,
- lang:'en',
- accent:'#38BDF8'
+ base:'https://logosiqai.vercel.app',token:'',mode:'agent',
+ expand:true,speak:true,voice:'',rate:0,lang:'en',accent:'#38BDF8'
 };
 let S={...D};
 try{S={...D,...JSON.parse(localStorage.getItem('jv')||'{}')}}catch{}
@@ -280,96 +258,40 @@ const save=()=>{try{localStorage.setItem('jv',JSON.stringify(S))}catch{}};
 
 const L={
  en:{
-  idle:'Online',
-  listen:'Listening',
-  orch:'Orchestrating',
-  speak:'Speaking',
-  error:'Disconnected',
-  openSet:'⚠ Open Settings',
-  upload:'Upload File',
-  cloud:'Cloud Files',
-  projects:'Projects',
-  search:'Search files…',
-  folder:'Folder (optional)',
-  drop:'Drop files here or tap to choose',
-  empty:'Nothing here yet',
-  pname:'Project name',
-  pdesc:'Description',
-  create:'Create',
-  conn:'Connection',
-  ai:'AI',
-  voice:'Voice',
-  ui:'Interface',
-  settings:'Settings',
-  base:'Backend Base URL',
-  token:'X-Service-Token',
-  test:'Test Connection',
-  agent:'Multi-Agent',
-  chat:'Fast Chat',
-  defMode:'Default mode',
-  expand:'Auto-expand agent steps',
-  auto:'Auto-speak replies',
-  voiceSel:'Neural voice',
-  rate:'Speech rate',
-  tvoice:'Test Voice & Lip-Sync',
-  lang:'Language',
-  accent:'Accent color',
-  ph:'Message Rami…',
-  noToken:'Add your service token in Settings',
-  offline:'Cannot reach the backend',
-  ok:'Connected ✓',
-  saved:'Saved to Database',
-  stopped:'Stopped',
-  uploaded:'Uploaded',
-  made:'Project created',
-  nostt:'Voice input is not supported in this browser',
+  idle:'Online',listen:'Listening',orch:'Orchestrating',speak:'Speaking',
+  error:'Disconnected',openSet:'⚠ Open Settings',upload:'Upload File',
+  cloud:'Cloud Files',projects:'Projects',search:'Search files…',
+  folder:'Folder (optional)',drop:'Drop files here or tap to choose',
+  empty:'Nothing here yet',pname:'Project name',pdesc:'Description',
+  create:'Create',conn:'Connection',ai:'AI',voice:'Voice',ui:'Interface',
+  settings:'Settings',base:'Backend Base URL',token:'X-Service-Token',
+  test:'Test Connection',agent:'Multi-Agent',chat:'Fast Chat',
+  defMode:'Default mode',expand:'Auto-expand agent steps',
+  auto:'Auto-speak replies',voiceSel:'Neural voice',rate:'Speech rate',
+  tvoice:'Test Voice & Lip-Sync',lang:'Language',accent:'Accent color',
+  ph:'Message Rami…',noToken:'Add your service token in Settings',
+  offline:'Cannot reach the backend',ok:'Connected ✓',
+  saved:'Saved to Database',stopped:'Stopped',uploaded:'Uploaded',
+  made:'Project created',nostt:'Voice input not supported in this browser',
   hi:'Welcome back, Rami, my creator and developer. All agents are ready.',
   tv:'Hello Rami, my creator and developer. Voice test complete.'
  },
  ar:{
-  idle:'متصل',
-  listen:'أستمع',
-  orch:'تنسيق الوكلاء',
-  speak:'أتحدث',
-  error:'غير متصل',
-  openSet:'⚠ فتح الإعدادات',
-  upload:'رفع ملف',
-  cloud:'ملفات السحابة',
-  projects:'المشاريع',
-  search:'ابحث في الملفات…',
-  folder:'المجلد (اختياري)',
-  drop:'أفلت الملفات هنا أو اضغط للاختيار',
-  empty:'لا يوجد شيء بعد',
-  pname:'اسم المشروع',
-  pdesc:'الوصف',
-  create:'إنشاء',
-  conn:'الاتصال',
-  ai:'الذكاء',
-  voice:'الصوت',
-  ui:'الواجهة',
-  settings:'الإعدادات',
-  base:'عنوان الخادم',
-  token:'X-Service-Token',
-  test:'اختبار الاتصال',
-  agent:'متعدد الوكلاء',
-  chat:'دردشة سريعة',
-  defMode:'الوضع الافتراضي',
-  expand:'فتح خطوات الوكلاء تلقائياً',
-  auto:'نطق الردود تلقائياً',
-  voiceSel:'الصوت العصبي',
-  rate:'سرعة الكلام',
-  tvoice:'اختبار الصوت ومزامنة الشفاه',
-  lang:'اللغة',
-  accent:'لون التمييز',
-  ph:'راسل رامي…',
-  noToken:'أضف رمز الخدمة في الإعدادات',
-  offline:'تعذر الوصول إلى الخادم',
-  ok:'تم الاتصال ✓',
-  saved:'تم الحفظ في قاعدة البيانات',
-  stopped:'تم الإيقاف',
-  uploaded:'تم الرفع',
-  made:'تم إنشاء المشروع',
-  nostt:'الإدخال الصوتي غير مدعوم في هذا المتصفح',
+  idle:'متصل',listen:'أستمع',orch:'تنسيق الوكلاء',speak:'أتحدث',
+  error:'غير متصل',openSet:'⚠ فتح الإعدادات',upload:'رفع ملف',
+  cloud:'ملفات السحابة',projects:'المشاريع',search:'ابحث في الملفات…',
+  folder:'المجلد (اختياري)',drop:'أفلت الملفات هنا أو اضغط للاختيار',
+  empty:'لا يوجد شيء بعد',pname:'اسم المشروع',pdesc:'الوصف',
+  create:'إنشاء',conn:'الاتصال',ai:'الذكاء',voice:'الصوت',ui:'الواجهة',
+  settings:'الإعدادات',base:'عنوان الخادم',token:'X-Service-Token',
+  test:'اختبار الاتصال',agent:'متعدد الوكلاء',chat:'دردشة سريعة',
+  defMode:'الوضع الافتراضي',expand:'فتح خطوات الوكلاء تلقائياً',
+  auto:'نطق الردود تلقائياً',voiceSel:'الصوت العصبي',rate:'سرعة الكلام',
+  tvoice:'اختبار الصوت ومزامنة الشفاه',lang:'اللغة',accent:'لون التمييز',
+  ph:'راسل رامي…',noToken:'أضف رمز الخدمة في الإعدادات',
+  offline:'تعذر الوصول إلى الخادم',ok:'تم الاتصال ✓',
+  saved:'تم الحفظ في قاعدة البيانات',stopped:'تم الإيقاف',uploaded:'تم الرفع',
+  made:'تم إنشاء المشروع',nostt:'الإدخال الصوتي غير مدعوم في هذا المتصفح',
   hi:'أهلاً بعودتك يا رامي، مبتكري ومطوّري. جميع الوكلاء جاهزون.',
   tv:'مرحباً رامي، مبتكري ومطوّري. اكتمل اختبار الصوت.'
  }
@@ -394,8 +316,7 @@ $('#vsel').append(...VOICES.map(([v,l])=>{
 
 const hex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
 let ACC=hex(S.accent);
-const AMB=[245,158,11],WH=[255,255,255],SIL=[216,228,248];
-const mix=(a,b,k)=>a.map((v,i)=>Math.round(v+(b[i]-v)*k));
+const AMB=[245,158,11],SIL=[216,228,248];
 
 function applyUI(){
  document.documentElement.lang=S.lang;
@@ -514,10 +435,8 @@ async function speak(text){
  try{
   audio();
   const body={
-   text:c,
-   voice:S.voice||null,
-   rate:(S.rate>=0?'+':'')+S.rate+'%',
-   pitch:'+0Hz'
+   text:c,voice:S.voice||null,
+   rate:(S.rate>=0?'+':'')+S.rate+'%',pitch:'+0Hz'
   };
   const r=await api('/api/tts',{
    method:'POST',
@@ -527,9 +446,7 @@ async function speak(text){
   const buf=await ac.decodeAudioData(await r.arrayBuffer());
   if(id!==sid)return;
   const s=ac.createBufferSource();
-  s.buffer=buf;
-  s.connect(an);
-  src=s;
+  s.buffer=buf;s.connect(an);src=s;
   setState('speak');
   await new Promise(res=>{s.onended=res;s.start()});
   if(id===sid){src=null;setState('idle')}
@@ -550,8 +467,7 @@ function listen(){
  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
  if(!SR)return toast(t('nostt'),1);
  if(rec){rec.stop();return}
- stopSpeak();
- audio();
+ stopSpeak();audio();
  rec=new SR();
  rec.lang=S.lang==='ar'?'ar-IQ':'en-US';
  rec.onresult=e=>{$('#inp').value=e.results[0][0].transcript;send()};
@@ -566,21 +482,14 @@ inp.oninput=()=>{
  inp.style.height='auto';
  inp.style.height=Math.min(inp.scrollHeight,96)+'px';
 };
-inp.onkeydown=e=>{
- if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}
-};
+inp.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}};
 const scr=()=>requestAnimationFrame(()=>msgs.scrollTop=msgs.scrollHeight);
 function addMsg(role,txt){
  const m=el('div','m '+role),b=el('div','bub',txt);
- b.dir='auto';
- m.append(b);
- msgs.append(m);
- scr();
- return m;
+ b.dir='auto';m.append(b);msgs.append(m);scr();return m;
 }
 function setMode(m){
- S.mode=m;
- save();
+ S.mode=m;save();
  $$('.seg button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
  $('[data-k=mode]').value=m;
 }
@@ -588,62 +497,38 @@ function sendOrStop(){if(busy&&ctl)ctl.abort();else send()}
 async function send(){
  const txt=inp.value.trim();
  if(!txt||busy)return;
- stopSpeak();
- audio();
- addMsg('user',txt);
- $('#snd').classList.remove('ready');
- inp.value='';
- inp.style.height='auto';
- busy=true;
- ctl=new AbortController();
- $('#snd').textContent='■';
+ stopSpeak();audio();addMsg('user',txt);
+ $('#snd').classList.remove('ready');inp.value='';inp.style.height='auto';
+ busy=true;ctl=new AbortController();$('#snd').textContent='■';
  const m=addMsg('ai','');
  m.firstChild.innerHTML='<span class="dots"><i></i><i></i><i></i></span>';
  const agent=S.mode==='agent';
- setState('orch');
- setChips([],agent);
+ setState('orch');setChips([],agent);
  try{
   const ep=agent?'/api/agent':'/api/chat';
   const d=await jpost(ep,{prompt:txt,history:[...CTX,...H.slice(-8)]},ctl.signal);
   H.push({role:'user',content:txt},{role:'assistant',content:d.reply||''});
-  fill(m,d);
-  setChips(d.agents_used||[]);
-  setState('idle');
+  fill(m,d);setChips(d.agents_used||[]);setState('idle');
   if(S.speak)speak(d.reply);
  }catch(e){
   setChips();
-  if(e.name==='AbortError'){
-   m.firstChild.textContent=t('stopped');
-   if(st!=='error')setState('idle');
-  }else{
-   m.firstChild.textContent=e.message;
-   toast(e.message,1);
-   if(st==='orch')setState('idle');
-  }
+  if(e.name==='AbortError'){m.firstChild.textContent=t('stopped');if(st!=='error')setState('idle')}
+  else{m.firstChild.textContent=e.message;toast(e.message,1);if(st==='orch')setState('idle')}
  }
- busy=false;
- ctl=null;
- $('#snd').textContent='➤';
- scr();
+ busy=false;ctl=null;$('#snd').textContent='➤';scr();
 }
 function fill(m,d){
  m.firstChild.textContent=d.reply||'';
  (d.steps||[]).forEach(s=>{
   const a=AG.find(x=>x[0]===s.agent)||['','•',s.agent];
-  const c=el('details','card g');
-  c.open=!!S.expand;
+  const c=el('details','card g');c.open=!!S.expand;
   const out=typeof s.output==='string'?s.output:JSON.stringify(s.output,null,1);
   c.append(el('summary','',a[1]+' '+a[2]),el('div','ins',s.instruction||''),el('pre','',out));
   m.append(c);
  });
  const f=el('div','foot');
- if((d.agents_used||[]).includes('project_creator')){
-  f.append(el('span','badge','✓ '+t('saved')));
-  loadProj();
- }
- const r=el('button','rp','🔊');
- r.onclick=()=>{audio();speak(d.reply)};
- f.append(r);
+ if((d.agents_used||[]).includes('project_creator')){f.append(el('span','badge','✓ '+t('saved')));loadProj()}
+ const r=el('button','rp','🔊');r.onclick=()=>{audio();speak(d.reply)};f.append(r);
  if(d.model||d.worker_model)f.append(el('span','mut',d.model||d.worker_model));
  m.append(f);
 }
@@ -651,64 +536,39 @@ function fill(m,d){
 /* ===== drawers ===== */
 function closeAll(){
  $$('.drawer').forEach(d=>d.classList.remove('open'));
- $('#modal').classList.remove('show');
- $('#scrim').classList.remove('show');
+ $('#modal').classList.remove('show');$('#scrim').classList.remove('show');
 }
 function openD(id){
- closeAll();
- $('#'+id).classList.add('open');
- $('#scrim').classList.add('show');
+ closeAll();$('#'+id).classList.add('open');$('#scrim').classList.add('show');
  id==='dFiles'?loadFiles():loadProj();
 }
-function openModal(){
- closeAll();
- $('#modal').classList.add('show');
- $('#scrim').classList.add('show');
-}
+function openModal(){closeAll();$('#modal').classList.add('show');$('#scrim').classList.add('show')}
 const fmt=b=>b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB';
-const ICO={
- pdf:'📕',png:'🖼',jpg:'🖼',jpeg:'🖼',gif:'🖼',webp:'🖼',
- mp3:'🎵',wav:'🎵',mp4:'🎞',mov:'🎞',zip:'🗜',csv:'📊',xlsx:'📊',
- py:'🧩',js:'🧩',json:'🧩',html:'🧩'
-};
+const ICO={pdf:'📕',png:'🖼',jpg:'🖼',jpeg:'🖼',gif:'🖼',webp:'🖼',mp3:'🎵',wav:'🎵',mp4:'🎞',mov:'🎞',zip:'🗜',csv:'📊',xlsx:'📊',py:'🧩',js:'🧩',json:'🧩',html:'🧩'};
 let FILES=[];
 async function loadFiles(){
  try{
   const d=await jget('/api/files?limit=50&offset=0');
-  FILES=d.files||[];
-  $('#ftot').textContent='('+(d.total??FILES.length)+')';
-  renderFiles();
+  FILES=d.files||[];$('#ftot').textContent='('+(d.total??FILES.length)+')';renderFiles();
  }catch(e){toast(e.message,1)}
 }
 function renderFiles(){
- const q=$('#fq').value.toLowerCase(),box=$('#flist');
- box.replaceChildren();
+ const q=$('#fq').value.toLowerCase(),box=$('#flist');box.replaceChildren();
  const fl=FILES.filter(f=>f.key.toLowerCase().includes(q));
  if(!fl.length)box.append(el('div','mut',t('empty')));
  fl.forEach(f=>{
   const r=el('div','row'),n=f.key.split('/').pop(),x=n.split('.').pop().toLowerCase();
-  const nm=el('div','n',n);
-  nm.title=f.key;
+  const nm=el('div','n',n);nm.title=f.key;
   const dt=f.last_modified?' · '+new Date(f.last_modified).toLocaleDateString(S.lang==='ar'?'ar':undefined):'';
-  const meta=el('div','mut',fmt(f.size_bytes||0)+dt);
-  const w=el('div','n');
-  w.append(nm,meta);
-  r.append(el('span','',ICO[x]||'📄'),w,el('span','','⬇'));
-  r.onclick=()=>dl(f.key);
-  box.append(r);
+  const w=el('div','n');w.append(nm,el('div','mut',fmt(f.size_bytes||0)+dt));
+  r.append(el('span','',ICO[x]||'📄'),w,el('span','','⬇'));r.onclick=()=>dl(f.key);box.append(r);
  });
 }
 async function dl(key){
  try{
   const d=await jget('/api/files/download?key='+encodeURIComponent(key));
-  const a=el('a');
-  a.href=d.download_url;
-  a.target='_blank';
-  a.rel='noopener';
-  a.download=key.split('/').pop();
-  document.body.append(a);
-  a.click();
-  a.remove();
+  const a=el('a');a.href=d.download_url;a.target='_blank';a.rel='noopener';
+  a.download=key.split('/').pop();document.body.append(a);a.click();a.remove();
  }catch(e){toast(e.message,1)}
 }
 async function upload(fl){
@@ -717,66 +577,45 @@ async function upload(fl){
  for(const f of fl){
   s.textContent='⬆ '+f.name+'…';
   try{
-   const fd=new FormData();
-   fd.append('file',f);
-   const fo=$('#fold').value.trim();
-   if(fo)fd.append('folder',fo);
+   const fd=new FormData();fd.append('file',f);
+   const fo=$('#fold').value.trim();if(fo)fd.append('folder',fo);
    await api('/api/files',{method:'POST',body:fd});
    toast(t('uploaded')+': '+f.name);
   }catch(e){toast(e.message,1)}
  }
- s.textContent='';
- loadFiles();
+ s.textContent='';loadFiles();
 }
-['dragover','drop'].forEach(ev=>{
- $('#dFiles').addEventListener(ev,e=>{
-  e.preventDefault();
-  if(ev==='drop')upload(e.dataTransfer.files);
- });
-});
+['dragover','drop'].forEach(ev=>$('#dFiles').addEventListener(ev,e=>{e.preventDefault();if(ev==='drop')upload(e.dataTransfer.files)}));
 async function loadProj(){
  try{
   const d=await jget('/api/projects');
-  const ps=Array.isArray(d)?d:d.projects||[],box=$('#plist');
-  box.replaceChildren();
+  const ps=Array.isArray(d)?d:d.projects||[],box=$('#plist');box.replaceChildren();
   if(!ps.length)box.append(el('div','mut',t('empty')));
   ps.forEach(p=>{
    const r=el('div','row'),w=el('div','n');
    w.append(el('div','n',p.name||'—'),el('div','mut',p.description||''));
-   r.append(w);
-   if(p.status)r.append(el('span','tag',p.status));
-   box.append(r);
+   r.append(w);if(p.status)r.append(el('span','tag',p.status));box.append(r);
   });
  }catch(e){toast(e.message,1)}
 }
 async function mkProj(){
- const name=$('#pn').value.trim();
- if(!name)return;
+ const name=$('#pn').value.trim();if(!name)return;
  try{
   await jpost('/api/projects',{name,description:$('#pd').value.trim(),status:$('#ps').value});
-  $('#pn').value=$('#pd').value='';
-  toast(t('made'));
-  loadProj();
+  $('#pn').value=$('#pd').value='';toast(t('made'));loadProj();
  }catch(e){toast(e.message,1)}
 }
 async function testConn(){
- try{
-  await jget('/api/projects');
-  await jget('/api/files?limit=1&offset=0');
-  toast(t('ok'));
-  setState('idle');
- }catch(e){toast(e.message,1)}
+ try{await jget('/api/projects');await jget('/api/files?limit=1&offset=0');toast(t('ok'));setState('idle')}
+ catch(e){toast(e.message,1)}
 }
 
 /* ===== settings wiring ===== */
 $$('[data-k]').forEach(e=>{
- const k=e.dataset.k;
- e.type==='checkbox'?e.checked=S[k]:e.value=S[k];
+ const k=e.dataset.k;e.type==='checkbox'?e.checked=S[k]:e.value=S[k];
  e.addEventListener('input',()=>{
-  S[k]=e.type==='checkbox'?e.checked:e.type==='range'?+e.value:e.value;
-  save();
-  if(k==='mode')setMode(S.mode);
-  if(k==='token'||k==='base')setState(S.token?'idle':'error');
+  S[k]=e.type==='checkbox'?e.checked:e.type==='range'?+e.value:e.value;save();
+  if(k==='mode')setMode(S.mode);if(k==='token'||k==='base')setState(S.token?'idle':'error');
   if(['lang','accent','rate'].includes(k))applyUI();
  });
 });
@@ -788,32 +627,21 @@ $$('.tabs button').forEach(b=>b.onclick=()=>{
 /* ===== full luminous white/silver humanoid portrait ===== */
 const cv=$('#cv'),ctx=cv.getContext('2d');
 let W,H2,dpr=Math.min(devicePixelRatio||1,2);
-function rs(){
- W=innerWidth;
- H2=innerHeight;
- cv.width=W*dpr;
- cv.height=H2*dpr;
- ctx.setTransform(dpr,0,0,dpr,0,0);
-}
-addEventListener('resize',rs);
-rs();
+function rs(){W=innerWidth;H2=innerHeight;cv.width=W*dpr;cv.height=H2*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
+addEventListener('resize',rs);rs();
 
 const g=(x,m,s)=>{const d=(x-m)/s;return Math.exp(-.5*d*d)};
-const ss=(a,b,x)=>{
- const t=Math.max(0,Math.min(1,(x-a)/(b-a)));
- return t*t*(3-2*t);
-};
+const ss=(a,b,x)=>{const t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t)};
 
 const PTS=[];
 (function buildPortrait(){
  const add=(x,y,z,r,v,b=0)=>PTS.push([x,y,z,r,v,b]);
  const inEye=(x,y)=>{
-  const d1=((x-468)/36)**2+((y-259)/13.5)**2;
-  const d2=((x-584)/26)**2+((y-262)/12)**2;
-  return d1<1||d2<1;
+  const dx1=(x-468)/36,dy1=(y-259)/13.5,dx2=(x-584)/26,dy2=(y-262)/12;
+  return dx1*dx1+dy1*dy1<1||dx2*dx2+dy2*dy2<1;
  };
- const inMouth=(x,y)=>((x-542)/44)**2+((y-386)/14)**2<1;
- const inEar=(x,y)=>((x-316)/28)**2+((y-318)/50)**2<1;
+ const inMouth=(x,y)=>{const dx=(x-542)/44,dy=(y-386)/14;return dx*dx+dy*dy<1};
+ const inEar=(x,y)=>{const dx=(x-316)/28,dy=(y-318)/50;return dx*dx+dy*dy<1};
 
  const cols=31,rows=36;
  for(let ci=0;ci<cols;ci++){
@@ -824,9 +652,7 @@ const PTS=[];
    const jawTaper=v>.55?1-.36*ss(.55,1,v):1;
    const envX=158*crownW*jawTaper;
    const cx=462+68*Math.sin(v*Math.PI*.85)+24*ss(.35,.95,v);
-   let x=cx+u*envX;
-   let y=46+v*414-26*(1-u*u)*Math.sin(v*Math.PI);
-
+   let x=cx+u*envX,y=46+v*414-26*(1-u*u)*Math.sin(v*Math.PI);
    if(u>.65){
     const rim=(u-.65)/.35;
     const p1=10*g(v,.43,.05)-9*g(v,.51,.035)+13*g(v,.61,.055);
@@ -834,23 +660,15 @@ const PTS=[];
     x+=rim*(p1+p2);
    }
    x+=3.2*Math.sin(v*18+u*4)*g(u,.1,.55);
-
    if(inEye(x,y)||inMouth(x,y)||inEar(x,y))continue;
    if(v>.88&&u<-.35)continue;
-
-   const q=Math.max(0,1-u*u*1.02-((v-.48)/.54)**2);
+   const dv=(v-.48)/.54,q=Math.max(0,1-u*u*1.02-dv*dv);
    let z=225*Math.sqrt(q)-35*(1-u);
-   z+=52*g(x,548,26)*g(y,315,42);
-   z+=26*g(x,505,65)*g(y,310,45);
-   z+=18*g(x,525,75)*g(y,226,18);
-   z-=22*g(x,468,36)*g(y,259,18);
-   z-=18*g(x,584,26)*g(y,262,16);
-   z+=20*g(x,545,42)*g(y,388,20);
-   z+=22*g(x,548,34)*g(y,450,24);
-
+   z+=52*g(x,548,26)*g(y,315,42)+26*g(x,505,65)*g(y,310,45)+18*g(x,525,75)*g(y,226,18);
+   z-=22*g(x,468,36)*g(y,259,18)+18*g(x,584,26)*g(y,262,16);
+   z+=20*g(x,545,42)*g(y,388,20)+22*g(x,548,34)*g(y,450,24);
    const front=ss(-.55,.78,u)*ss(.05,.24,v)*(1-.22*ss(.86,1,v));
-   const topFade=v<.15?(1-v/.15)*.65:0;
-   const bokeh=Math.max(0,Math.min(1,(1-front)*.82+topFade));
+   const bokeh=Math.max(0,Math.min(1,(1-front)*.82+(v<.15?(1-v/.15)*.65:0)));
    const r=1.12+bokeh*2.25+(.35*g(u,.88,.14));
    const bright=(.34+.66*front)*(1-.32*bokeh);
    add(x,y,z,r,bright,bokeh);
@@ -858,21 +676,16 @@ const PTS=[];
  }
 
  for(let i=0;i<24;i++){
-  const t=i/23;
-  const lx=414+t*98,ly=231-9*Math.sin(t*Math.PI*.92)-2*t;
-  add(lx,ly,88+22*t,1.45,.92,.04);
-  add(lx+1.5,ly+4.2,86+22*t,1.25,.76,.08);
+  const t=i/23,lx=414+t*98,ly=231-9*Math.sin(t*Math.PI*.92)-2*t;
+  add(lx,ly,88+22*t,1.45,.92,.04);add(lx+1.5,ly+4.2,86+22*t,1.25,.76,.08);
   const rx=554+t*66,ry=229-7*Math.sin(t*Math.PI*.88)+3*t;
-  add(rx,ry,98-18*t,1.45,.95,.04);
-  add(rx-1,ry+4,95-18*t,1.22,.78,.08);
+  add(rx,ry,98-18*t,1.45,.95,.04);add(rx-1,ry+4,95-18*t,1.22,.78,.08);
  }
 
  const addEye=(cx,cy,rx,ry,zc,n)=>{
   for(let i=0;i<n;i++){
    const a=(i/n)*Math.PI*2;
-   const ex=cx+Math.cos(a)*rx;
-   const ey=cy+Math.sin(a)*ry*(Math.sin(a)<0?1.04:.92);
-   add(ex,ey,zc+10*Math.cos(a),1.48,1.0,0);
+   add(cx+Math.cos(a)*rx,cy+Math.sin(a)*ry*(Math.sin(a)<0?1.04:.92),zc+10*Math.cos(a),1.48,1,0);
   }
   for(let i=0;i<n+4;i++){
    const a=(i/(n+4))*Math.PI*2;
@@ -883,47 +696,25 @@ const PTS=[];
    const a=(i/12)*Math.PI*2;
    add(cx+Math.cos(a)*ir,cy+Math.sin(a)*ir,zc+12,1.25,.88,0);
   }
-  add(cx,cy,zc+14,2.05,1.0,0);
-  add(cx-2,cy-1.5,zc+14,1.35,1.0,0);
-  add(cx+2,cy+1,zc+13,1.25,.92,0);
+  add(cx,cy,zc+14,2.05,1,0);add(cx-2,cy-1.5,zc+14,1.35,1,0);add(cx+2,cy+1,zc+13,1.25,.92,0);
  };
- addEye(468,259,33,11,76,26);
- addEye(584,262,23,10,72,22);
+ addEye(468,259,33,11,76,26);addEye(584,262,23,10,72,22);
 
  for(let i=0;i<18;i++){
-  const t=i/17;
-  const nx=536+t*20+2*Math.sin(t*Math.PI);
-  const ny=248+t*86;
-  const nz=98+t*48;
-  add(nx,ny,nz,1.5,.98,0);
-  add(nx-5.5,ny+1,nz-6,1.28,.82,.04);
-  add(nx+5,ny+1,nz-7,1.32,.86,.04);
-  for(let s=1;s<=3;s++){
-   add(nx-7-s*7.5,ny+2+s*1.2,nz-10-s*11,1.08,.56-.07*s,.08);
-  }
+  const t=i/17,nx=536+t*20+2*Math.sin(t*Math.PI),ny=248+t*86,nz=98+t*48;
+  add(nx,ny,nz,1.5,.98,0);add(nx-5.5,ny+1,nz-6,1.28,.82,.04);add(nx+5,ny+1,nz-7,1.32,.86,.04);
+  for(let s=1;s<=3;s++)add(nx-7-s*7.5,ny+2+s*1.2,nz-10-s*11,1.08,.56-.07*s,.08);
  }
- for(let i=0;i<14;i++){
-  const a=(i/14)*Math.PI*2;
-  add(554+Math.cos(a)*11,335+Math.sin(a)*7.5,144+4*Math.cos(a),1.45,.96,0);
- }
- for(let i=0;i<10;i++){
-  const t=i/9;
-  add(520+t*22,343-4*Math.sin(t*Math.PI),122,1.32,.84,.05);
-  add(562+t*15,342-3*Math.sin(t*Math.PI),124,1.35,.88,.05);
- }
+ for(let i=0;i<14;i++){const a=(i/14)*Math.PI*2;add(554+Math.cos(a)*11,335+Math.sin(a)*7.5,144+4*Math.cos(a),1.45,.96,0)}
+ for(let i=0;i<10;i++){const t=i/9;add(520+t*22,343-4*Math.sin(t*Math.PI),122,1.32,.84,.05);add(562+t*15,342-3*Math.sin(t*Math.PI),124,1.35,.88,.05)}
 
- add(541,356,120,1.15,.72,.05);
- add(555,356,122,1.15,.74,.05);
- add(540,366,123,1.22,.8,.04);
- add(556,366,125,1.22,.82,.04);
+ add(541,356,120,1.15,.72,.05);add(555,356,122,1.15,.74,.05);
+ add(540,366,123,1.22,.8,.04);add(556,366,125,1.22,.82,.04);
  for(let i=0;i<25;i++){
-  const u=-1+2*(i/24);
-  const lx=541+u*44;
-  const bow=3.2*Math.exp(-((u-.08)/.22)**2)-1.6*Math.exp(-((u-.08)/.08)**2);
-  const uy=383-7.5*Math.cos(u*Math.PI*.5)-bow;
-  add(lx,uy,124*(1-.2*u*u),1.36,.94,.03);
-  const my=386-1.2*Math.cos(u*Math.PI);
-  add(lx,my,126*(1-.2*u*u),1.42,1.0,0);
+  const u=-1+2*(i/24),lx=541+u*44,b1=(u-.08)/.22,b2=(u-.08)/.08;
+  const bow=3.2*Math.exp(-b1*b1)-1.6*Math.exp(-b2*b2);
+  add(lx,383-7.5*Math.cos(u*Math.PI*.5)-bow,124*(1-.2*u*u),1.36,.94,.03);
+  add(lx,386-1.2*Math.cos(u*Math.PI),126*(1-.2*u*u),1.42,1,0);
   if(Math.abs(u)<.88){
    const ly=391+11.5*Math.cos(u*Math.PI*.56);
    add(lx,ly,123*(1-.22*u*u),1.34,.9,.04);
@@ -932,54 +723,34 @@ const PTS=[];
  }
 
  for(let i=0;i<30;i++){
-  const t=i/29;
-  const jx=578-t*212;
-  const jy=442+19*Math.sin(Math.min(1,t*2.6)*Math.PI*.5)-68*ss(.28,1,t);
-  const jz=108*(1-t*1.35);
-  add(jx,jy,jz,1.42+t*.45,.92-t*.32,t*.35);
-  add(jx+3,jy-7,jz+5,1.18+t*.3,.72-t*.22,t*.3);
+  const t=i/29,jx=578-t*212,jy=442+19*Math.sin(Math.min(1,t*2.6)*Math.PI*.5)-68*ss(.28,1,t),jz=108*(1-t*1.35);
+  add(jx,jy,jz,1.42+t*.45,.92-t*.32,t*.35);add(jx+3,jy-7,jz+5,1.18+t*.3,.72-t*.22,t*.3);
  }
 
  for(let i=0;i<26;i++){
-  const t=i/25,a=-1.15+t*4.25;
-  const ex=314+Math.cos(a)*22*(a>1.6?.78:1);
-  const ey=318+Math.sin(a)*47;
-  add(ex,ey,-78,2.15,.68,.55);
-  if(i%2===0)add(ex+8,ey*.96+12,-70,1.75,.55,.5);
+  const t=i/25,a=-1.15+t*4.25,ex=314+Math.cos(a)*22*(a>1.6?.78:1),ey=318+Math.sin(a)*47;
+  add(ex,ey,-78,2.15,.68,.55);if(i%2===0)add(ex+8,ey*.96+12,-70,1.75,.55,.5);
  }
- add(326,356,-68,2.4,.64,.62);
- add(334,363,-62,2.1,.58,.58);
+ add(326,356,-68,2.4,.64,.62);add(334,363,-62,2.1,.58,.58);
 
- const ncols=22,nrows=13;
- for(let ci=0;ci<ncols;ci++){
-  const u=-1+2*(ci/(ncols-1));
-  for(let ri=0;ri<nrows;ri++){
-   const v=ri/(nrows-1);
-   const flare=1+.58*v*v;
-   const nx=422-18*v+u*(98*flare);
+ for(let ci=0;ci<22;ci++){
+  const u=-1+2*(ci/21);
+  for(let ri=0;ri<13;ri++){
+   const v=ri/12,flare=1+.58*v*v,nx=422-18*v+u*(98*flare);
    const ny=428+v*178+26*(1-u*u)*(1-v*.5)+18*u*ss(.4,1,v);
    if(ny<465&&nx>445)continue;
    const nz=32*Math.sqrt(Math.max(0,1-u*u))-35*v;
    const bokeh=Math.min(1,.32+v*.65+(1-Math.abs(u-.15))*.12);
-   const r=1.8+v*2.7;
-   const bright=(.72-.48*v)*(1-.25*Math.abs(u));
-   add(nx,ny,nz,r,Math.max(.14,bright),bokeh);
+   add(nx,ny,nz,1.8+v*2.7,Math.max(.14,(.72-.48*v)*(1-.25*Math.abs(u))),bokeh);
   }
  }
 
- const halo=[
-  [448,18,3.6,.72],[488,26,2.8,.62],[532,38,3.2,.55],
-  [382,36,2.6,.48],[334,76,3.1,.52],[292,138,2.9,.45],
-  [272,216,3.4,.58],[254,288,2.4,.42],[276,392,3.2,.52],
-  [306,458,2.9,.46],[618,96,2.7,.5],[648,162,3.1,.55],
-  [664,238,2.5,.48],[668,298,3.3,.62],[652,366,2.8,.5],
-  [624,424,2.6,.44],[588,488,3.1,.48],[568,546,3.8,.56],
-  [524,588,4.2,.48],[266,558,3.9,.52],[234,584,4.5,.45],
-  [362,594,3.6,.42],[462,598,3.4,.4]
- ];
- for(const [hx,hy,hr,hv] of halo){
-  add(hx,hy,(Math.random()-.5)*140,hr,hv,.88);
- }
+ const halo=[[448,18,3.6,.72],[488,26,2.8,.62],[532,38,3.2,.55],[382,36,2.6,.48],
+  [334,76,3.1,.52],[292,138,2.9,.45],[272,216,3.4,.58],[254,288,2.4,.42],[276,392,3.2,.52],
+  [306,458,2.9,.46],[618,96,2.7,.5],[648,162,3.1,.55],[664,238,2.5,.48],[668,298,3.3,.62],
+  [652,366,2.8,.5],[624,424,2.6,.44],[588,488,3.1,.48],[568,546,3.8,.56],[524,588,4.2,.48],
+  [266,558,3.9,.52],[234,584,4.5,.45],[362,594,3.6,.42],[462,598,3.4,.4]];
+ for(const [hx,hy,hr,hv] of halo)add(hx,hy,(Math.random()-.5)*140,hr,hv,.88);
 })();
 
 const N=PTS.length;
@@ -992,22 +763,12 @@ for(let i=0;i<N;i++){[X0[i],Y0[i],Z0[i],R[i],V[i],B[i]]=PTS[i]}
 const ED=[];
 (function(){
  const cs=26,gr={},fc=i=>B[i]<.68;
- for(let i=0;i<N;i++){
-  const k=((X0[i]/cs)|0)+','+((Y0[i]/cs)|0);
-  (gr[k]=gr[k]||[]).push(i);
- }
+ for(let i=0;i<N;i++){const k=((X0[i]/cs)|0)+','+((Y0[i]/cs)|0);(gr[k]=gr[k]||[]).push(i)}
  for(let i=0;i<N;i++){
   if(!fc(i))continue;
   const cx=(X0[i]/cs)|0,cy=(Y0[i]/cs)|0,c=[];
-  for(let a=-1;a<=1;a++){
-   for(let b=-1;b<=1;b++){
-    for(const j of gr[(cx+a)+','+(cy+b)]||[]){
-     if(j!==i&&fc(j)){
-      const d=Math.hypot(X0[i]-X0[j],Y0[i]-Y0[j]);
-      if(d<23)c.push([d,j]);
-     }
-    }
-   }
+  for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++)for(const j of gr[(cx+a)+','+(cy+b)]||[]){
+   if(j!==i&&fc(j)){const d=Math.hypot(X0[i]-X0[j],Y0[i]-Y0[j]);if(d<23)c.push([d,j])}
   }
   c.sort((p,q)=>p[0]-q[0]);
   c.slice(0,3).forEach(([d,j])=>{if(d<c[0][0]*1.55)ED.push(i,j)});
@@ -1016,18 +777,15 @@ const ED=[];
 
 const EY=[{x:468,y:259,rx:35,ry:13},{x:584,y:262,rx:25,ry:12}];
 const gz={n:0,tx:0,ty:0,x:0,y:0,brow:0},exp={brow:0,smile:.3};
-let vis=.5,yaw=0,pit=0,tY=0,tP=0,px=0,py=0;
-let drag=0,lx=0,ly=0,blink=0,nb=2600,mouth=0,lvl=0;
+let vis=.5,yaw=0,pit=0,tY=0,tP=0,px=0,py=0,drag=0,lx=0,ly=0,blink=0,nb=2600,mouth=0,lvl=0;
 
 cv.addEventListener('pointerdown',e=>{drag=1;lx=e.clientX;ly=e.clientY});
 addEventListener('pointermove',e=>{
- px=e.clientX/W*2-1;
- py=e.clientY/H2*2-1;
+ px=e.clientX/W*2-1;py=e.clientY/H2*2-1;
  if(drag){
   tY=Math.max(-.65,Math.min(.65,tY+(e.clientX-lx)*.006));
   tP=Math.max(-.35,Math.min(.35,tP+(e.clientY-ly)*.004));
-  lx=e.clientX;
-  ly=e.clientY;
+  lx=e.clientX;ly=e.clientY;
  }
 });
 addEventListener('pointerup',()=>drag=0);
@@ -1037,51 +795,31 @@ function frame(now){
  const t=now/1000;
  if(now>nb){
   const p=(now-nb)/165;
-  if(p>=1){
-   blink=0;
-   nb=now+(Math.random()<.2?220:2800+Math.random()*3400);
-  }else{
-   blink=Math.sin(p*Math.PI);
-  }
+  if(p>=1){blink=0;nb=now+(Math.random()<.2?220:2800+Math.random()*3400)}
+  else blink=Math.sin(p*Math.PI);
  }
  let tm=0;
  if(st==='speak'){
   if(src&&an){
-   an.getByteFrequencyData(fd);
-   let s=0;
-   for(let i=2;i<28;i++)s+=fd[i];
-   lvl=Math.min(1,s/26/115);
-   tm=Math.max(.1,lvl*1.15);
-   let lo=0,hi=0;
-   for(let i=2;i<9;i++)lo+=fd[i];
-   for(let i=14;i<40;i++)hi+=fd[i];
+   an.getByteFrequencyData(fd);let s=0;for(let i=2;i<28;i++)s+=fd[i];
+   lvl=Math.min(1,s/26/115);tm=Math.max(.1,lvl*1.15);
+   let lo=0,hi=0;for(let i=2;i<9;i++)lo+=fd[i];for(let i=14;i<40;i++)hi+=fd[i];
    vis+=(hi/(lo+hi+1)-vis)*.25;
   }else{
-   vis=.5+.3*Math.sin(t*9);
-   lvl=.45+.3*Math.sin(t*17);
+   vis=.5+.3*Math.sin(t*9);lvl=.45+.3*Math.sin(t*17);
    tm=Math.max(.12,.48+.34*Math.sin(t*17)+.18*Math.sin(t*28+.9));
   }
- }else{
-  lvl=0;
- }
+ }else lvl=0;
  mouth+=(tm-mouth)*.32;
 
  if(now>gz.n){
   gz.n=now+(st==='orch'?500:1200)+Math.random()*2200;
-  gz.tx=(Math.random()-.5)*1.4;
-  gz.ty=(Math.random()-.5)*.8;
+  gz.tx=(Math.random()-.5)*1.4;gz.ty=(Math.random()-.5)*.8;
   if(Math.random()<.18)gz.brow=1;
  }
- if(st==='orch'){
-  gz.tx=-.5+.35*Math.sin(t*3);
-  gz.ty=.6;
- }else if(st==='listen'||st==='speak'){
-  gz.tx=px*.7;
-  gz.ty=-py*.5;
- }
- gz.x+=(gz.tx-gz.x)*.12;
- gz.y+=(gz.ty-gz.y)*.12;
- gz.brow*=.94;
+ if(st==='orch'){gz.tx=-.5+.35*Math.sin(t*3);gz.ty=.6}
+ else if(st==='listen'||st==='speak'){gz.tx=px*.7;gz.ty=-py*.5}
+ gz.x+=(gz.tx-gz.x)*.12;gz.y+=(gz.ty-gz.y)*.12;gz.brow*=.94;
 
  const tb=(st==='listen')*.02+(st==='orch')*.012+gz.brow*.025+lvl*.02;
  exp.brow+=(tb-exp.brow)*.15;
@@ -1097,36 +835,21 @@ function frame(now){
  const ringCol=(st==='error'?AMB:st==='listen'?ACC:SIL).join();
  const bm=st==='error'?.75+.25*Math.sin(t*3.2):.96+.04*Math.sin(t*1.2);
  ctx.globalCompositeOperation='source-over';
- ctx.fillStyle='#05070C';
- ctx.fillRect(0,0,W,H2);
+ ctx.fillStyle='#05070C';ctx.fillRect(0,0,W,H2);
 
  const ga=st==='speak'?.08+.09*lvl:st==='orch'?.09:.065;
  const gr=ctx.createRadialGradient(cxs,cys,0,cxs,cys,S*340);
- gr.addColorStop(0,`rgba(220,232,255,${ga})`);
- gr.addColorStop(.55,`rgba(190,210,245,${(ga*.35).toFixed(3)})`);
+ gr.addColorStop(0,'rgba(220,232,255,'+ga+')');
+ gr.addColorStop(.55,'rgba(190,210,245,'+(ga*.35).toFixed(3)+')');
  gr.addColorStop(1,'rgba(5,7,12,0)');
- ctx.fillStyle=gr;
- ctx.fillRect(0,0,W,H2);
+ ctx.fillStyle=gr;ctx.fillRect(0,0,W,H2);
 
  const ring=(r,a,c)=>{
-  ctx.strokeStyle=`rgba(${c},${Math.max(0,a).toFixed(3)})`;
-  ctx.lineWidth=1.1;
-  ctx.beginPath();
-  ctx.arc(cxs,cys,r,0,6.2832);
-  ctx.stroke();
+  ctx.strokeStyle='rgba('+c+','+Math.max(0,a).toFixed(3)+')';
+  ctx.lineWidth=1.1;ctx.beginPath();ctx.arc(cxs,cys,r,0,6.2832);ctx.stroke();
  };
- if(st==='listen'){
-  for(let k=0;k<3;k++){
-   const p=(t*.6+k/3)%1;
-   ring(S*(220+p*210),(1-p)*.34,ringCol);
-  }
- }
- if(st==='speak'){
-  for(let k=0;k<3;k++){
-   const rr=S*(225+k*28+lvl*34*(k+1)+4*Math.sin(t*6+k));
-   ring(rr,.08+.18*lvl-k*.02,ringCol);
-  }
- }
+ if(st==='listen')for(let k=0;k<3;k++){const p=(t*.6+k/3)%1;ring(S*(220+p*210),(1-p)*.34,ringCol)}
+ if(st==='speak')for(let k=0;k<3;k++)ring(S*(225+k*28+lvl*34*(k+1)+4*Math.sin(t*6+k)),.08+.18*lvl-k*.02,ringCol);
 
  const scan=320+Math.sin(t*1.8)*230,wave=420-((t*1.2)%1)*330;
  for(let i=0;i<N;i++){
@@ -1135,11 +858,7 @@ function frame(now){
    const dx=(x-e.x)/e.rx,dy=(y-e.y)/e.ry,d2=dx*dx+dy*dy;
    if(d2<1)y=e.y+(y-e.y)*(1-.86*blink*(1-d2));
    const dd=Math.hypot(x-e.x,y-e.y);
-   if(dd<18){
-    const wi=g(dd,0,5);
-    x+=gz.x*4.2*wi;
-    y-=gz.y*3.2*wi;
-   }
+   if(dd<18){const wi=g(dd,0,5);x+=gz.x*4.2*wi;y-=gz.y*3.2*wi}
    y-=exp.brow*155*g(x,e.x,e.rx*1.1)*g(Y0[i],e.y-30,12);
   }
   const mOpen=y>385?Math.min(1,(y-385)/14):0;
@@ -1149,9 +868,7 @@ function frame(now){
 
   const u=x-CX,w=y-CY;
   const xr=u*cY+z*sY,zr=-u*sY+z*cY,yr=w*cP-zr*sP;
-  PX[i]=ox+xr*S;
-  PY[i]=oy+(280+yr)*S;
-  PZ[i]=w*sP+zr*cP;
+  PX[i]=ox+xr*S;PY[i]=oy+(280+yr)*S;PZ[i]=w*sP+zr*cP;
   PR[i]=Math.max(.55,R[i]*S*.9);
 
   const depthFade=.48+.52*Math.max(0,Math.min(1,(PZ[i]+130)/240));
@@ -1162,26 +879,14 @@ function frame(now){
  }
 
  ctx.lineWidth=.55;
- ctx.strokeStyle=`rgba(220,232,255,${st==='orch'?.14:.095})`;
+ ctx.strokeStyle='rgba(220,232,255,'+(st==='orch'?.14:.095)+')';
  ctx.beginPath();
- for(let k=0;k<ED.length;k+=2){
-  const a=ED[k],b=ED[k+1];
-  ctx.moveTo(PX[a],PY[a]);
-  ctx.lineTo(PX[b],PY[b]);
- }
+ for(let k=0;k<ED.length;k+=2){const a=ED[k],b=ED[k+1];ctx.moveTo(PX[a],PY[a]);ctx.lineTo(PX[b],PY[b])}
  ctx.stroke();
 
  if(st==='orch'){
-  ctx.strokeStyle='rgba(255,255,255,.42)';
-  ctx.lineWidth=.85;
-  ctx.beginPath();
-  for(let k=0;k<ED.length;k+=2){
-   const a=ED[k],b=ED[k+1];
-   if(Math.abs(Y0[a]-scan)<20){
-    ctx.moveTo(PX[a],PY[a]);
-    ctx.lineTo(PX[b],PY[b]);
-   }
-  }
+  ctx.strokeStyle='rgba(255,255,255,.42)';ctx.lineWidth=.85;ctx.beginPath();
+  for(let k=0;k<ED.length;k+=2){const a=ED[k],b=ED[k+1];if(Math.abs(Y0[a]-scan)<20){ctx.moveTo(PX[a],PY[a]);ctx.lineTo(PX[b],PY[b])}}
   ctx.stroke();
  }
 
@@ -1190,48 +895,33 @@ function frame(now){
   const r=PR[i],a=PA[i],bk=B[i];
   if(a<.03)continue;
   if(bk>.25||V[i]>.75){
-   const hr=r*(1.9+bk*1.55);
-   const ha=a*(.14+bk*.16);
+   const hr=r*(1.9+bk*1.55),ha=a*(.14+bk*.16);
    const bg=ctx.createRadialGradient(PX[i],PY[i],0,PX[i],PY[i],hr);
-   bg.addColorStop(0,`rgba(255,255,255,${(ha*1.35).toFixed(3)})`);
-   bg.addColorStop(.45,`rgba(218,230,255,${ha.toFixed(3)})`);
+   bg.addColorStop(0,'rgba(255,255,255,'+(ha*1.35).toFixed(3)+')');
+   bg.addColorStop(.45,'rgba(218,230,255,'+ha.toFixed(3)+')');
    bg.addColorStop(1,'rgba(218,230,255,0)');
-   ctx.fillStyle=bg;
-   ctx.beginPath();
-   ctx.arc(PX[i],PY[i],hr,0,6.2832);
-   ctx.fill();
+   ctx.fillStyle=bg;ctx.beginPath();ctx.arc(PX[i],PY[i],hr,0,6.2832);ctx.fill();
   }
   const coreA=a*(1-bk*.58);
   if(coreA>.03){
-   ctx.fillStyle=`rgba(255,255,255,${coreA.toFixed(3)})`;
-   ctx.beginPath();
-   ctx.arc(PX[i],PY[i],r*(1-bk*.35),0,6.2832);
-   ctx.fill();
+   ctx.fillStyle='rgba(255,255,255,'+coreA.toFixed(3)+')';
+   ctx.beginPath();ctx.arc(PX[i],PY[i],r*(1-bk*.35),0,6.2832);ctx.fill();
   }
  }
  ctx.globalCompositeOperation='source-over';
 }
 
 document.addEventListener('pointerdown',e=>{
- const b=e.target.closest('.b,.ib,.seg button,.tabs button,.row');
- if(!b)return;
- const r=b.getBoundingClientRect(),s=el('span','rip');
- const d=Math.max(r.width,r.height)*2;
- s.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;
- b.append(s);
- setTimeout(()=>s.remove(),600);
+ const b=e.target.closest('.b,.ib,.seg button,.tabs button,.row');if(!b)return;
+ const r=b.getBoundingClientRect(),s=el('span','rip'),d=Math.max(r.width,r.height)*2;
+ s.style.cssText='width:'+d+'px;height:'+d+'px;left:'+(e.clientX-r.left-d/2)+'px;top:'+(e.clientY-r.top-d/2)+'px';
+ b.append(s);setTimeout(()=>s.remove(),600);
 });
 
 /* ===== boot ===== */
 addEventListener('pointerdown',e=>{
- if(S.token&&S.speak&&!e.target.closest('button,textarea,input,select,.drawer,.modal')){
-  audio();
-  speak(t('hi'));
- }
+ if(S.token&&S.speak&&!e.target.closest('button,textarea,input,select,.drawer,.modal')){audio();speak(t('hi'))}
 },{once:true});
-setMode(S.mode);
-applyUI();
-setState(S.token?'idle':'error');
-addMsg('ai',t('hi'));
+setMode(S.mode);applyUI();setState(S.token?'idle':'error');addMsg('ai',t('hi'));
 requestAnimationFrame(frame);
 </script></body></html>
