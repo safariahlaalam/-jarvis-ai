@@ -17,8 +17,9 @@ from app.services.file_builder import extract_and_build_file
 
 router = APIRouter(dependencies=[Depends(declare_openapi_auth)])
 
-DEFAULT_BASE_URL = "https://api.groq.com/openai/v1"
-DEFAULT_MODEL = "qwen/qwen3.8-27b"
+GROQ_BASE_URL = "https://api.groq.com/openai/v1"
+DEFAULT_CODER_MODEL = "qwen/qwen3.8-27b"
+DEFAULT_STRATEGIST_MODEL = "openai/gpt-oss-120b"
 DEFAULT_SYSTEM_PROMPT = "You are Jarvis, a concise, helpful personal AI assistant."
 
 FILE_GENERATION_INSTRUCTION = (
@@ -58,27 +59,29 @@ def _pick_default_voice(text: str) -> str:
     return os.getenv("TTS_ENGLISH_VOICE", "en-US-AvaNeural").strip()
 
 
-def _get_ai_client() -> tuple[AsyncOpenAI | None, str]:
-    api_key = (
-        os.getenv("AI_API_KEY", "").strip()
-        or os.getenv("GROQ_API_KEY", "").strip()
-    )
-    if not api_key:
-        return None, ""
+def _get_fast_chat_client() -> tuple[AsyncOpenAI | None, str]:
+    coder_key = os.getenv("RAMI_CODER_API_KEY", "").strip()
+    if coder_key:
+        base_url = os.getenv("RAMI_CODER_BASE_URL", "").strip() or GROQ_BASE_URL
+        model = os.getenv("RAMI_CODER_MODEL", "").strip() or DEFAULT_CODER_MODEL
+        return AsyncOpenAI(api_key=coder_key, base_url=base_url), model
 
-    base_url = os.getenv("AI_BASE_URL", "").strip() or DEFAULT_BASE_URL
-    model = os.getenv("AI_MODEL", "").strip() or DEFAULT_MODEL
-    client = AsyncOpenAI(api_key=api_key, base_url=base_url)
-    return client, model
+    strategist_key = os.getenv("RAMI_STRATEGIST_API_KEY", "").strip()
+    if strategist_key:
+        base_url = os.getenv("RAMI_STRATEGIST_BASE_URL", "").strip() or GROQ_BASE_URL
+        model = os.getenv("RAMI_STRATEGIST_MODEL", "").strip() or DEFAULT_STRATEGIST_MODEL
+        return AsyncOpenAI(api_key=strategist_key, base_url=base_url), model
+
+    return None, ""
 
 
 @router.post("/api/chat")
 async def create_chat_completion(payload: ChatRequest, request: Request):
-    client, model = _get_ai_client()
+    client, model = _get_fast_chat_client()
     if client is None:
         return not_configured_response(
             feature="chat",
-            message="Chat provider is not configured.",
+            message="Fast Chat provider is not configured. Add RAMI_CODER_API_KEY or RAMI_STRATEGIST_API_KEY.",
             request_id=request.state.request_id,
         )
 
@@ -128,7 +131,7 @@ async def run_multi_agent(payload: ChatRequest, request: Request):
     except ValueError:
         return not_configured_response(
             feature="agent",
-            message="Chat provider is not configured.",
+            message="Multi-Agent providers are not configured.",
             request_id=request.state.request_id,
         )
 
