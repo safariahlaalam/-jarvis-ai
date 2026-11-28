@@ -1,5 +1,6 @@
 """Multi-Agent Orchestrator & Specialist Workers for Jarvis."""
 import asyncio
+from dataclasses import dataclass
 from html.parser import HTMLParser
 import json
 import os
@@ -11,11 +12,25 @@ import uuid
 
 import boto3
 from botocore.config import Config
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, OpenAIError
 import psycopg
 
 DEFAULT_BASE_URL = "https://api.groq.com/openai/v1"
 DEFAULT_WORKER_MODEL = "qwen/qwen3.8-27b"
+
+_FILE_TAG_RE = re.compile(
+    r"\[FILE:\s*[^\]]+?\s*\].*?\[/FILE\]",
+    re.DOTALL | re.IGNORECASE,
+)
+
+
+@dataclass(frozen=True)
+class AgentEndpoint:
+    role: str
+    provider: str
+    model: str
+    base_url: str
+    api_key: str
 
 
 def _clean_text(text: str) -> str:
@@ -272,51 +287,191 @@ def _fetch_files_context() -> str:
 
 class JarvisOrchestrator:
     def __init__(self) -> None:
-        api_key = (
+        shared_groq_key = (
             os.getenv("AI_API_KEY", "").strip()
             or os.getenv("GROQ_API_KEY", "").strip()
         )
-        if not api_key:
-            raise ValueError("AI_API_KEY is not configured.")
-
-        base_url = os.getenv("AI_BASE_URL", "").strip() or DEFAULT_BASE_URL
-        self.worker_model = os.getenv("AI_MODEL", "").strip() or DEFAULT_WORKER_MODEL
-        self.orchestrator_model = (
-            os.getenv("ORCHESTRATOR_MODEL", "").strip() or self.worker_model
+        gemini_key = (
+            os.getenv("RAMI_RESEARCH_API_KEY", "").strip()
+            or os.getenv("GEMINI_API_KEY", "").strip()
         )
-        self.client = AsyncOpenAI(api_key=api_key, base_url=base_url)
+        strategist_key = (
+            os.getenv("RAMI_STRATEGIST_API_KEY", "").strip()
+            or shared_groq_key
+        )
+        coder_key = (
+            os.getenv("RAMI_CODER_API_KEY", "").strip()
+            or shared_groq_key
+        )
+        critic_key = (
+            os.getenv("RAMI_CRITIC_API_KEY", "").strip()
+            or os.getenv("OPENROUTER_API_KEY", "").strip()
+        )
+
+        self.endpoints: dict[str, AgentEndpoint] = {}
+
+        if gemini_key:
+            self.endpoints["research"] = AgentEndpoint(
+                role="research",
+                provider="google",
+                model=os.getenv("RAMI_RESEARCH_MODEL", "").strip() or "gemini-3.8-flash",
+                base_url=os.getenv("RAMI_RESEARCH_BASE_URL", "").strip()
+                or "https://generativelanguage.googleapis.com/v1beta/openai/",
+                api_key=gemini_key,
+            )
+
+        if strategist_key:
+            self.endpoints["strategist"] = AgentEndpoint(
+                role="strategist",
+                provider="groq",
+                model=os.getenv("RAMI_STRATEGIST_MODEL", "").strip()
+                or os.getenv("ORCHESTRATOR_MODEL", "").strip()
+                or "openai/gpt-oss-120b",
+                base_url=os.getenv("RAMI_STRATEGIST_BASE_URL", "").strip()
+                or os.getenv("AI_BASE_URL", "").strip()
+                or DEFAULT_BASE_URL,
+                api_key=strategist_key,
+            )
+
+        if coder_key:
+            self.endpoints["coder"] = AgentEndpoint(
+                role="coder",
+                provider="groq",
+                model=os.getenv("RAMI_CODER_MODEL", "").strip()
+                or os.getenv("AI_MODEL", "").strip()
+                or "qwen/qwen3.8-27b",
+                base_url=os.getenv("RAMI_CODER_BASE_URL", "").strip()
+                or os.getenv("AI_BASE_URL", "").strip()
+                or DEFAULT_BASE_URL,
+                api_key=coder_key,
+            )
+
+        if critic_key:
+            self.endpoints["critic"] = AgentEndpoint(
+                role="critic",
+                provider="openrouter",
+                model=os.getenv("RAMI_CRITIC_MODEL", "").strip() or "openrouter/free",
+                base_url=os.getenv("RAMI_CRITIC_BASE_URL", "").strip()
+                or "https://openrouter.ai/api/v1",
+                api_key=critic_key,
+            )
+
+        if not self.endpoints:
+            raise ValueError("No AI provider API keys are configured.")
+
+        self._clients: dict[tuple[str, str], AsyncOpenAI] = {}
+        primary_orch = self.endpoints.get("strategist") or next(iter(self.endpoints.values()))
+        primary_work = self.endpoints.get("coder") or primary_orch
+        self.orchestrator_model = primary_orch.model
+        self.worker_model = primary_work.model
+
+    def _get_client(self, ep: AgentEndpoint) -> AsyncOpenAI:
+        cache_key = (ep.base_url, ep.api_key)
+        if cache_key not in self._clients:
+            headers = None
+            if "openrouter.ai" in ep.base_url:
+                headers = {
+                    "HTTP-Referer": "https://afariahlaalam.github.io",
+                    "X-Title": "RAMI AI",
+                }
+            self._clients[cache_key] = AsyncOpenAI(
+                api_key=ep.api_key,
+                base_url=ep.base_url,
+                default_headers=headers,
+            )
+        return self._clients[cache_key]
+
+    def _build_failover_chain(self, preferred_role: str) -> list[AgentEndpoint]:
+        order = [preferred_role, "strategist", "coder", "research", "critic"]
+        chain: list[AgentEndpoint] = []
+        seen: set[tuple[str, str, str]] = set()
+
+        for role in order:
+            ep = self.endpoints.get(role)
+            if ep:
+                sig = (ep.base_url, ep.model, ep.api_key)
+                if sig not in seen:
+                    seen.add(sig)
+                    chain.append(ep)
+
+        # Extra fast Groq backup model if Groq is configured
+        groq_ep = self.endpoints.get("strategist") or self.endpoints.get("coder")
+        if groq_ep and "api.groq.com" in groq_ep.base_url:
+            backup = AgentEndpoint(
+                role="groq_backup",
+                provider="groq",
+                model="openai/gpt-oss-20b",
+                base_url=groq_ep.base_url,
+                api_key=groq_ep.api_key,
+            )
+            sig = (backup.base_url, backup.model, backup.api_key)
+            if sig not in seen:
+                chain.append(backup)
+
+        return chain
+
+    async def _call_agent(
+        self,
+        preferred_role: str,
+        messages: list[dict[str, str]],
+        temperature: float = 0.3,
+    ) -> tuple[str, AgentEndpoint]:
+        chain = self._build_failover_chain(preferred_role)
+        last_exc: Exception | None = None
+
+        for ep in chain:
+            client = self._get_client(ep)
+            try:
+                completion = await client.chat.completions.create(
+                    model=ep.model,
+                    messages=messages,
+                    temperature=temperature,
+                )
+                raw = completion.choices[0].message.content if completion.choices else ""
+                cleaned = _clean_text(raw or "")
+                if cleaned:
+                    return cleaned, ep
+            except OpenAIError as exc:
+                last_exc = exc
+                continue
+            except Exception as exc:
+                last_exc = exc
+                continue
+
+        if last_exc is not None:
+            raise last_exc
+        return "", chain[0]
 
     async def _plan(
         self, prompt: str, history: list[dict[str, str]]
     ) -> list[dict[str, str]]:
         planner_system = (
-            "You are the Orchestrator of Jarvis, a multi-agent AI system. "
+            "You are the Orchestrator of RAMI, a multi-agent AI system. "
             "Analyze the user's request and split it into 1 to 4 focused subtasks assigned to specialist workers:\n"
             "- 'web_search': searches the live internet for current facts, news, tools, or external data.\n"
+            "- 'research': deep analysis, document architecture, long-context structuring, and comprehensive briefs.\n"
+            "- 'coder': writes code, scripts, HTML/CSS, and formatted [FILE:filename.ext]...[/FILE] deliverables.\n"
             "- 'projects': reads existing projects stored in PostgreSQL.\n"
             "- 'project_creator': creates and saves new project(s) into PostgreSQL when the user asks to create/save/add a project.\n"
-            "- 'files': inspects/organizes user files stored in Backblaze B2 cloud storage.\n"
-            "- 'analyst': handles reasoning, coding, planning, or general answers.\n\n"
+            "- 'files': inspects/organizes user files stored in Cloudflare R2 cloud storage.\n"
+            "- 'analyst': handles strategic reasoning, planning, and general problem-solving.\n\n"
             "Return ONLY valid JSON in this exact schema:\n"
-            '{"tasks": [{"agent": "web_search|projects|project_creator|files|analyst", "instruction": "specific task or search query"}]}'
+            '{"tasks": [{"agent": "web_search|research|coder|projects|project_creator|files|analyst", "instruction": "specific task or search query"}]}'
         )
         messages = [{"role": "system", "content": planner_system}]
         messages.extend(history[-6:])
         messages.append({"role": "user", "content": prompt})
 
-        completion = await self.client.chat.completions.create(
-            model=self.orchestrator_model,
-            messages=messages,
-            temperature=0.1,
-        )
-        raw = completion.choices[0].message.content if completion.choices else ""
+        raw, _ = await self._call_agent("strategist", messages, temperature=0.1)
         parsed = _extract_json(
-            raw or "",
+            raw,
             {"tasks": [{"agent": "analyst", "instruction": prompt}]},
         )
         tasks = parsed.get("tasks", [])[:4]
         valid_agents = {
             "web_search",
+            "research",
+            "coder",
             "projects",
             "project_creator",
             "files",
@@ -344,7 +499,7 @@ class JarvisOrchestrator:
         prior_context: str,
     ) -> dict[str, str]:
         extractor_system = (
-            "You are the Project Creator Agent for Jarvis. "
+            "You are the Project Creator Agent for RAMI. "
             "Extract the project(s) to create from the user's request and any prior research context. "
             "Return ONLY valid JSON in this exact format:\n"
             '{"projects": [{"name": "Concise Project Title", "description": "Detailed actionable description", "status": "active"}]}'
@@ -356,17 +511,16 @@ class JarvisOrchestrator:
         if prior_context:
             user_msg += f"\nContext from earlier agents:\n{prior_context}"
 
-        completion = await self.client.chat.completions.create(
-            model=self.worker_model,
-            messages=[
+        raw, used_ep = await self._call_agent(
+            "strategist",
+            [
                 {"role": "system", "content": extractor_system},
                 {"role": "user", "content": user_msg},
             ],
             temperature=0.2,
         )
-        raw = completion.choices[0].message.content if completion.choices else ""
         parsed = _extract_json(
-            raw or "",
+            raw,
             {
                 "projects": [
                     {
@@ -392,6 +546,7 @@ class JarvisOrchestrator:
         )
         return {
             "agent": "project_creator",
+            "model": used_ep.model,
             "instruction": instruction,
             "output": f"Database insert result:\n{db_result}",
         }
@@ -411,10 +566,9 @@ class JarvisOrchestrator:
             )
 
         if agent == "web_search":
-            # Generate a focused search query first so web results are crisp
-            q_completion = await self.client.chat.completions.create(
-                model=self.orchestrator_model,
-                messages=[
+            search_query, _ = await self._call_agent(
+                "research",
+                [
                     {
                         "role": "system",
                         "content": (
@@ -426,41 +580,55 @@ class JarvisOrchestrator:
                 ],
                 temperature=0.0,
             )
-            search_query = _clean_text(
-                (q_completion.choices[0].message.content if q_completion.choices else "")
-                or instruction
-            )
+            search_query = search_query or instruction
             search_results = await asyncio.to_thread(_search_web_sync, search_query)
+            preferred_role = "research"
             system_prompt = (
-                "You are the Live Web Research Specialist Agent for Jarvis. "
+                "You are the Live Web Research Specialist Agent for RAMI. "
                 "Synthesize accurate, factual findings from the live search results below and include key source URLs.\n"
                 f"SEARCH_QUERY: {search_query}\n"
                 f"LIVE_WEB_RESULTS_JSON:\n{search_results}"
             )
+        elif agent == "research":
+            preferred_role = "research"
+            system_prompt = (
+                "You are the Deep Research & Document Architect Agent for RAMI. "
+                "Produce thorough, well-organized research, structured outlines, and clear insights."
+            )
+        elif agent == "coder":
+            preferred_role = "coder"
+            system_prompt = (
+                "You are the Principal Code & File Engineering Agent for RAMI. "
+                "Write clean, production-ready code, HTML/CSS designs, or structured document content. "
+                "If a file is requested, include the complete [FILE:exact_filename.ext]...[/FILE] block."
+            )
         elif agent == "projects":
             context_data = await asyncio.to_thread(_fetch_projects_context)
+            preferred_role = "strategist"
             system_prompt = (
-                "You are the Projects Specialist Agent for Jarvis. "
+                "You are the Projects Specialist Agent for RAMI. "
                 "Use the live PostgreSQL projects data below to answer accurately.\n"
                 f"LIVE_PROJECTS_JSON:\n{context_data}"
             )
         elif agent == "files":
             context_data = await asyncio.to_thread(_fetch_files_context)
+            preferred_role = "strategist"
             system_prompt = (
-                "You are the Cloud Storage Specialist Agent for Jarvis. "
-                "Use the live Backblaze B2 file listing below to answer accurately.\n"
+                "You are the Cloud Storage Specialist Agent for RAMI. "
+                "Use the live Cloudflare R2 file listing below to answer accurately.\n"
                 f"LIVE_FILES_JSON:\n{context_data}"
             )
         else:
             agent = "analyst"
+            preferred_role = "strategist"
             system_prompt = (
-                "You are the Senior Analyst & Engineering Agent for Jarvis. "
-                "Provide a thorough, accurate, and structured solution to the assigned subtask."
+                "You are the Lead Strategist & Reasoning Agent for RAMI. "
+                "Provide a thorough, logical, and actionable solution to the assigned subtask."
             )
 
-        completion = await self.client.chat.completions.create(
-            model=self.worker_model,
-            messages=[
+        output_text, used_ep = await self._call_agent(
+            preferred_role,
+            [
                 {"role": "system", "content": system_prompt},
                 {
                     "role": "user",
@@ -472,11 +640,11 @@ class JarvisOrchestrator:
             ],
             temperature=0.3,
         )
-        raw = completion.choices[0].message.content if completion.choices else ""
         return {
             "agent": agent,
+            "model": used_ep.model,
             "instruction": instruction,
-            "output": _clean_text(raw or ""),
+            "output": output_text,
         }
 
     async def _synthesize(
@@ -484,17 +652,56 @@ class JarvisOrchestrator:
         prompt: str,
         history: list[dict[str, str]],
         worker_results: list[dict[str, str]],
-    ) -> str:
+    ) -> tuple[str, str]:
+        # Extract any [FILE:...] blocks produced by workers so they are never lost
+        preserved_files: list[str] = []
+        for res in worker_results:
+            for match in _FILE_TAG_RE.findall(res.get("output", "")):
+                if match not in preserved_files:
+                    preserved_files.append(match)
+
         if len(worker_results) == 1 and worker_results[0]["agent"] != "project_creator":
-            return worker_results[0]["output"]
+            single_out = worker_results[0]["output"]
+            return single_out, worker_results[0].get("model", self.orchestrator_model)
 
         compiled = "\n\n".join(
-            f"[{res['agent'].upper()} AGENT]\nSubtask: {res['instruction']}\nResult:\n{res['output']}"
+            f"[{res['agent'].upper()} AGENT | {res.get('model', '')}]\n"
+            f"Subtask: {res['instruction']}\nResult:\n{res['output']}"
             for res in worker_results
         )
+
+        # Optional Critic review pass when multiple agents collaborated and Critic key is active
+        critic_note = ""
+        if len(worker_results) >= 2 and "critic" in self.endpoints:
+            try:
+                review_text, critic_ep = await self._call_agent(
+                    "critic",
+                    [
+                        {
+                            "role": "system",
+                            "content": (
+                                "You are the Critic & Quality Verification Agent for RAMI. "
+                                "Briefly check the specialist outputs for factual gaps, missing steps, or bugs "
+                                "in 3-5 concise bullet points."
+                            ),
+                        },
+                        {
+                            "role": "user",
+                            "content": f"User Request:\n{prompt}\n\nSpecialist Outputs:\n{compiled}",
+                        },
+                    ],
+                    temperature=0.2,
+                )
+                if review_text:
+                    critic_note = f"\n\n[CRITIC REVIEW | {critic_ep.model}]\n{review_text}"
+            except Exception:
+                critic_note = ""
+
         synth_system = (
-            "You are the Jarvis Orchestrator. Synthesize the specialist agent outputs below "
+            "You are the RAMI Lead Strategist & Orchestrator. Synthesize the specialist agent outputs below "
             "into one cohesive, clear, well-structured final response in the same language as the user's request. "
+            "If any specialist output includes a [FILE:filename.ext]...[/FILE] block, you MUST preserve that exact "
+            "[FILE:...][/FILE] block verbatim in your response. "
             "If new projects were created in the database, clearly confirm their saved names and details."
         )
         messages = [{"role": "system", "content": synth_system}]
@@ -502,22 +709,23 @@ class JarvisOrchestrator:
         messages.append(
             {
                 "role": "user",
-                "content": f"User Request:\n{prompt}\n\nSpecialist Outputs:\n{compiled}",
+                "content": f"User Request:\n{prompt}\n\nSpecialist Outputs:\n{compiled}{critic_note}",
             }
         )
 
-        completion = await self.client.chat.completions.create(
-            model=self.orchestrator_model,
-            messages=messages,
-            temperature=0.3,
-        )
-        raw = completion.choices[0].message.content if completion.choices else ""
-        return _clean_text(raw or "")
+        final_text, synth_ep = await self._call_agent("strategist", messages, temperature=0.3)
+
+        # Guarantee any generated [FILE:...] block survives synthesis
+        for file_block in preserved_files:
+            if "[FILE:" not in final_text:
+                final_text = f"{final_text}\n\n{file_block}".strip()
+
+        return final_text, synth_ep.model
 
     async def run(self, prompt: str, history: list[dict[str, str]]) -> dict[str, Any]:
         tasks = await self._plan(prompt, history)
 
-        # Wave 1: Run read/research/analysis workers in parallel
+        # Wave 1: Run read/research/coding/analysis workers in parallel across providers
         wave1_tasks = [t for t in tasks if t["agent"] != "project_creator"]
         wave2_tasks = [t for t in tasks if t["agent"] == "project_creator"]
 
@@ -545,10 +753,10 @@ class JarvisOrchestrator:
             )
 
         all_results = wave1_results + wave2_results
-        final_reply = await self._synthesize(prompt, history, all_results)
+        final_reply, final_model = await self._synthesize(prompt, history, all_results)
         return {
             "reply": final_reply,
-            "orchestrator_model": self.orchestrator_model,
+            "orchestrator_model": final_model,
             "worker_model": self.worker_model,
             "agents_used": [w["agent"] for w in all_results],
             "steps": all_results,
