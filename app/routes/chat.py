@@ -1,8 +1,12 @@
-"""Chat & Multi-Agent Orchestrator endpoints."""
+"""Chat, Multi-Agent Orchestrator, and Neural TTS endpoints."""
 import os
+import re
 
+import edge_tts
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import Response
 from openai import AsyncOpenAI, OpenAIError
+from pydantic import BaseModel, Field
 
 from app.errors import not_configured_response
 from app.orchestrator import JarvisOrchestrator, _clean_text
@@ -14,6 +18,28 @@ router = APIRouter(dependencies=[Depends(declare_openapi_auth)])
 DEFAULT_BASE_URL = "https://api.groq.com/openai/v1"
 DEFAULT_MODEL = "qwen/qwen3.8-27b"
 DEFAULT_SYSTEM_PROMPT = "You are Jarvis, a concise, helpful personal AI assistant."
+
+
+class TTSRequest(BaseModel):
+    text: str = Field(..., min_length=1, max_length=4000)
+    voice: str | None = Field(default=None)
+    rate: str = Field(default="+0%")
+    pitch: str = Field(default="+0Hz")
+
+
+def _prepare_speech_text(text: str) -> str:
+    cleaned = _clean_text(text)
+    cleaned = re.sub(r"```[\s\S]*?```", " ", cleaned)
+    cleaned = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", cleaned)
+    cleaned = re.sub(r"[#*_`~>|]", " ", cleaned)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    return cleaned
+
+
+def _pick_default_voice(text: str) -> str:
+    if re.search(r"[\u0600-\u06FF]", text):
+        return os.getenv("TTS_ARABIC_VOICE", "ar-IQ-RanaNeural").strip()
+    return os.getenv("TTS_ENGLISH_VOICE", "en-US-AvaNeural").strip()
 
 
 def _get_ai_client() -> tuple[AsyncOpenAI | None, str]:
@@ -91,3 +117,30 @@ async def run_multi_agent(payload: ChatRequest, request: Request):
         return await orchestrator.run(prompt=payload.prompt, history=history)
     except OpenAIError as exc:
         raise HTTPException(status_code=502, detail=f"Agent provider error: {exc}") from exc
+
+
+@router.post("/api/tts")
+async def synthesize_speech(payload: TTSRequest):
+    speech_text = _prepare_speech_text(payload.text)
+    if not speech_text:
+        raise HTTPException(status_code=400, detail="No speakable text provided.")
+
+    selected_voice = (payload.voice or "").strip() or _pick_default_voice(speech_text)
+    try:
+        communicate = edge_tts.Communicate(
+            text=speech_text,
+            voice=selected_voice,
+            rate=payload.rate,
+            pitch=payload.pitch,
+        )
+        audio_bytes = bytearray()
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                audio_bytes.extend(chunk["data"])
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"TTS synthesis failed: {exc}") from exc
+
+    if not audio_bytes:
+        raise HTTPException(status_code=502, detail="TTS returned empty audio.")
+
+    return Response(content=bytes(audio_bytes), media_type="audio/mpeg")
