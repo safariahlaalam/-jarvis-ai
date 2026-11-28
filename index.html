@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#05070C"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#05070C">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Rami</title>
 <style>
 :root{--bg:#05070C;--acc:#38BDF8;--gold:#F59E0B;--line:rgba(255,255,255,.08);--glass:rgba(14,18,27,.62)}
@@ -89,8 +90,15 @@ header .b:active{transform:rotate(80deg) scale(.88)}
 @keyframes rp{to{transform:scale(1);opacity:0}}
 @keyframes up{from{opacity:0;transform:translateY(14px) scale(.92)}}
 .tools .b,.seg,.comp,.m,.list>*{animation:up .5s cubic-bezier(.2,1.2,.3,1) backwards}
-.tools .b:nth-child(2),.list>:nth-child(2){animation-delay:.07s}.tools .b:nth-child(3),.list>:nth-child(3){animation-delay:.14s}.seg{animation-delay:.2s}.comp{animation-delay:.26s}.list>:nth-child(n+4){animation-delay:.2s}
-.chip{animation:up .5s backwards}.chip:nth-child(2){animation-delay:.05s}.chip:nth-child(3){animation-delay:.1s}.chip:nth-child(4){animation-delay:.15s}.chip:nth-child(5){animation-delay:.2s}
+.tools .b:nth-child(2),.list>:nth-child(2){animation-delay:.07s}
+.tools .b:nth-child(3),.list>:nth-child(3){animation-delay:.14s}
+.seg{animation-delay:.2s}.comp{animation-delay:.26s}
+.list>:nth-child(n+4){animation-delay:.2s}
+.chip{animation:up .5s backwards}
+.chip:nth-child(2){animation-delay:.05s}
+.chip:nth-child(3){animation-delay:.1s}
+.chip:nth-child(4){animation-delay:.15s}
+.chip:nth-child(5){animation-delay:.2s}
 .seg button.on{box-shadow:0 0 14px -4px var(--acc) inset}
 .ib.send.ready{box-shadow:0 0 18px var(--acc);animation:beat 1.5s ease-in-out infinite}
 @keyframes beat{50%{transform:scale(1.1)}}
@@ -105,7 +113,13 @@ body.listen #mic::before{animation:ring 1.2s ease-out infinite}
 
 <div class="hud">
  <div class="top">
-  <header><div class="logo">RAMI</div><div class="hr"><span id="st" class="st"></span><button class="b g" onclick="openModal()" aria-label="Settings">⚙</button></div></header>
+  <header>
+   <div class="logo">RAMI</div>
+   <div class="hr">
+    <span id="st" class="st"></span>
+    <button class="b g" onclick="openModal()" aria-label="Settings">⚙</button>
+   </div>
+  </header>
   <div class="chips" id="chips"></div>
   <button id="warn" class="b g warn" hidden onclick="openModal()" data-i="openSet"></button>
  </div>
@@ -116,187 +130,679 @@ body.listen #mic::before{animation:ring 1.2s ease-out infinite}
    <button class="b g" onclick="openD('dFiles')">☁ <span data-i="cloud"></span></button>
    <button class="b g" onclick="openD('dProj')">▦ <span data-i="projects"></span></button>
   </div>
-  <div class="seg g"><button data-m="agent" title="/api/agent" onclick="setMode('agent')" data-i="agent"></button><button data-m="chat" title="/api/chat" onclick="setMode('chat')" data-i="chat"></button></div>
-  <div class="comp g"><textarea id="inp" rows="1" dir="auto" data-ph="ph"></textarea><button id="mic" class="ib" onclick="listen()" aria-label="Mic">🎙</button><button id="snd" class="ib send" onclick="sendOrStop()" aria-label="Send">➤</button></div>
+  <div class="seg g">
+   <button data-m="agent" title="/api/agent" onclick="setMode('agent')" data-i="agent"></button>
+   <button data-m="chat" title="/api/chat" onclick="setMode('chat')" data-i="chat"></button>
+  </div>
+  <div class="comp g">
+   <textarea id="inp" rows="1" dir="auto" data-ph="ph"></textarea>
+   <button id="mic" class="ib" onclick="listen()" aria-label="Mic">🎙</button>
+   <button id="snd" class="ib send" onclick="sendOrStop()" aria-label="Send">➤</button>
+  </div>
  </div>
 </div>
 <input type="file" id="pick" multiple hidden onchange="upload(this.files);this.value=''">
 
 <aside class="drawer g" id="dFiles">
- <div class="dh"><b>☁ <span data-i="cloud"></span> <span id="ftot" class="mut"></span></b><span><button class="b g" onclick="loadFiles()">⟳</button><button class="b g" onclick="closeAll()">✕</button></span></div>
+ <div class="dh">
+  <b>☁ <span data-i="cloud"></span> <span id="ftot" class="mut"></span></b>
+  <span>
+   <button class="b g" onclick="loadFiles()">⟳</button>
+   <button class="b g" onclick="closeAll()">✕</button>
+  </span>
+ </div>
  <div class="fld"><input class="in" id="fq" data-ph="search" oninput="renderFiles()"></div>
  <div class="fld"><input class="in" id="fold" data-ph="folder"></div>
  <div class="drop" onclick="$('#pick').click()" data-i="drop"></div>
- <div id="fstat" class="mut"></div><div class="list" id="flist"></div>
+ <div id="fstat" class="mut"></div>
+ <div class="list" id="flist"></div>
 </aside>
 
 <aside class="drawer g" id="dProj">
- <div class="dh"><b>▦ <span data-i="projects"></span></b><span><button class="b g" onclick="loadProj()">⟳</button><button class="b g" onclick="closeAll()">✕</button></span></div>
+ <div class="dh">
+  <b>▦ <span data-i="projects"></span></b>
+  <span>
+   <button class="b g" onclick="loadProj()">⟳</button>
+   <button class="b g" onclick="closeAll()">✕</button>
+  </span>
+ </div>
  <div class="fld"><input class="in" id="pn" data-ph="pname"></div>
  <div class="fld"><input class="in" id="pd" data-ph="pdesc"></div>
- <div style="display:flex;gap:8px"><select id="ps" style="flex:1"><option>planning</option><option selected>active</option><option>paused</option><option>done</option></select><button class="b g" style="color:var(--acc)" onclick="mkProj()" data-i="create"></button></div>
+ <div style="display:flex;gap:8px">
+  <select id="ps" style="flex:1">
+   <option>planning</option>
+   <option selected>active</option>
+   <option>paused</option>
+   <option>done</option>
+  </select>
+  <button class="b g" style="color:var(--acc)" onclick="mkProj()" data-i="create"></button>
+ </div>
  <div class="list" id="plist"></div>
 </aside>
 
 <section class="modal g" id="modal">
- <div class="dh"><b>⚙ <span data-i="settings"></span></b><button class="b g" onclick="closeAll()">✕</button></div>
- <div class="tabs"><button class="on" data-t="c" data-i="conn"></button><button data-t="a" data-i="ai"></button><button data-t="v" data-i="voice"></button><button data-t="u" data-i="ui"></button></div>
+ <div class="dh">
+  <b>⚙ <span data-i="settings"></span></b>
+  <button class="b g" onclick="closeAll()">✕</button>
+ </div>
+ <div class="tabs">
+  <button class="on" data-t="c" data-i="conn"></button>
+  <button data-t="a" data-i="ai"></button>
+  <button data-t="v" data-i="voice"></button>
+  <button data-t="u" data-i="ui"></button>
+ </div>
  <div class="pn" data-p="c">
-  <label><span data-i="base"></span><div class="fld"><input class="in" data-k="base" dir="ltr" autocapitalize="off"></div></label>
-  <label><span data-i="token"></span><div class="fld" style="display:flex"><input class="in" id="tok" type="password" data-k="token" dir="ltr" autocapitalize="off"><button class="rp" onclick="const i=$('#tok');i.type=i.type==='password'?'text':'password'">👁</button></div></label>
+  <label>
+   <span data-i="base"></span>
+   <div class="fld"><input class="in" data-k="base" dir="ltr" autocapitalize="off"></div>
+  </label>
+  <label>
+   <span data-i="token"></span>
+   <div class="fld" style="display:flex">
+    <input class="in" id="tok" type="password" data-k="token" dir="ltr" autocapitalize="off">
+    <button class="rp" onclick="const i=$('#tok');i.type=i.type==='password'?'text':'password'">👁</button>
+   </div>
+  </label>
   <button class="b g" style="color:var(--acc);justify-content:center" onclick="testConn()" data-i="test"></button>
  </div>
  <div class="pn" data-p="a" hidden>
-  <label><span data-i="defMode"></span><select data-k="mode"><option value="agent">Multi-Agent (/api/agent)</option><option value="chat">Fast Chat (/api/chat)</option></select></label>
-  <label class="ck"><span data-i="expand"></span><input type="checkbox" data-k="expand"></label>
+  <label>
+   <span data-i="defMode"></span>
+   <select data-k="mode">
+    <option value="agent">Multi-Agent (/api/agent)</option>
+    <option value="chat">Fast Chat (/api/chat)</option>
+   </select>
+  </label>
+  <label class="ck">
+   <span data-i="expand"></span>
+   <input type="checkbox" data-k="expand">
+  </label>
  </div>
  <div class="pn" data-p="v" hidden>
-  <label class="ck"><span data-i="auto"></span><input type="checkbox" data-k="speak"></label>
-  <label><span data-i="voiceSel"></span><select data-k="voice" id="vsel"></select></label>
-  <label><span><span data-i="rate"></span>: <b id="rv"></b>%</span><input type="range" min="-30" max="30" step="5" data-k="rate"></label>
+  <label class="ck">
+   <span data-i="auto"></span>
+   <input type="checkbox" data-k="speak">
+  </label>
+  <label>
+   <span data-i="voiceSel"></span>
+   <select data-k="voice" id="vsel"></select>
+  </label>
+  <label>
+   <span><span data-i="rate"></span>: <b id="rv"></b>%</span>
+   <input type="range" min="-30" max="30" step="5" data-k="rate">
+  </label>
   <button class="b g" style="color:var(--acc);justify-content:center" onclick="testVoice()" data-i="tvoice"></button>
  </div>
  <div class="pn" data-p="u" hidden>
-  <label><span data-i="lang"></span><select data-k="lang"><option value="en">English (LTR)</option><option value="ar">العربية (RTL)</option></select></label>
-  <label><span data-i="accent"></span><select data-k="accent"><option value="#38BDF8">Bioluminescent Cyan</option><option value="#E8C987">Champagne Gold</option><option value="#34D399">Emerald Pulse</option></select></label>
+  <label>
+   <span data-i="lang"></span>
+   <select data-k="lang">
+    <option value="en">English (LTR)</option>
+    <option value="ar">العربية (RTL)</option>
+   </select>
+  </label>
+  <label>
+   <span data-i="accent"></span>
+   <select data-k="accent">
+    <option value="#38BDF8">Bioluminescent Cyan</option>
+    <option value="#E8C987">Champagne Gold</option>
+    <option value="#34D399">Emerald Pulse</option>
+   </select>
+  </label>
  </div>
 </section>
 
 <script>
-const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+const el=(t,c,x)=>{
+ const e=document.createElement(t);
+ if(c)e.className=c;
+ if(x!=null)e.textContent=x;
+ return e;
+};
 
 /* ===== settings + i18n ===== */
-const D={base:'https://logosiqai.vercel.app',token:'',mode:'agent',expand:true,speak:true,voice:'',rate:0,lang:'en',accent:'#38BDF8'};
-let S={...D};try{S={...D,...JSON.parse(localStorage.getItem('jv')||'{}')}}catch{}
+const D={
+ base:'https://logosiqai.vercel.app',
+ token:'',
+ mode:'agent',
+ expand:true,
+ speak:true,
+ voice:'',
+ rate:0,
+ lang:'en',
+ accent:'#38BDF8'
+};
+let S={...D};
+try{S={...D,...JSON.parse(localStorage.getItem('jv')||'{}')}}catch{}
 const save=()=>{try{localStorage.setItem('jv',JSON.stringify(S))}catch{}};
-const L={en:{idle:'Online',listen:'Listening',orch:'Orchestrating',speak:'Speaking',error:'Disconnected',openSet:'⚠ Open Settings',upload:'Upload File',cloud:'Cloud Files',projects:'Projects',search:'Search files…',folder:'Folder (optional)',drop:'Drop files here or tap to choose',empty:'Nothing here yet',pname:'Project name',pdesc:'Description',create:'Create',conn:'Connection',ai:'AI',voice:'Voice',ui:'Interface',settings:'Settings',base:'Backend Base URL',token:'X-Service-Token',test:'Test Connection',agent:'Multi-Agent',chat:'Fast Chat',defMode:'Default mode',expand:'Auto-expand agent steps',auto:'Auto-speak replies',voiceSel:'Neural voice',rate:'Speech rate',tvoice:'Test Voice & Lip-Sync',lang:'Language',accent:'Accent color',ph:'Message Rami…',noToken:'Add your service token in Settings',offline:'Cannot reach the backend',ok:'Connected ✓',saved:'Saved to Database',stopped:'Stopped',uploaded:'Uploaded',made:'Project created',nostt:'Voice input is not supported in this browser',hi:'Welcome back, Rami, my creator and developer. All agents are ready.',tv:'Hello Rami, my creator and developer. Voice test complete.'},
-ar:{idle:'متصل',listen:'أستمع',orch:'تنسيق الوكلاء',speak:'أتحدث',error:'غير متصل',openSet:'⚠ فتح الإعدادات',upload:'رفع ملف',cloud:'ملفات السحابة',projects:'المشاريع',search:'ابحث في الملفات…',folder:'المجلد (اختياري)',drop:'أفلت الملفات هنا أو اضغط للاختيار',empty:'لا يوجد شيء بعد',pname:'اسم المشروع',pdesc:'الوصف',create:'إنشاء',conn:'الاتصال',ai:'الذكاء',voice:'الصوت',ui:'الواجهة',settings:'الإعدادات',base:'عنوان الخادم',token:'X-Service-Token',test:'اختبار الاتصال',agent:'متعدد الوكلاء',chat:'دردشة سريعة',defMode:'الوضع الافتراضي',expand:'فتح خطوات الوكلاء تلقائياً',auto:'نطق الردود تلقائياً',voiceSel:'الصوت العصبي',rate:'سرعة الكلام',tvoice:'اختبار الصوت ومزامنة الشفاه',lang:'اللغة',accent:'لون التمييز',ph:'راسل رامي…',noToken:'أضف رمز الخدمة في الإعدادات',offline:'تعذر الوصول إلى الخادم',ok:'تم الاتصال ✓',saved:'تم الحفظ في قاعدة البيانات',stopped:'تم الإيقاف',uploaded:'تم الرفع',made:'تم إنشاء المشروع',nostt:'الإدخال الصوتي غير مدعوم في هذا المتصفح',hi:'أهلاً بعودتك يا رامي، مبتكري ومطوّري. جميع الوكلاء جاهزون.',tv:'مرحباً رامي، مبتكري ومطوّري. اكتمل اختبار الصوت.'}};
+
+const L={
+ en:{
+  idle:'Online',
+  listen:'Listening',
+  orch:'Orchestrating',
+  speak:'Speaking',
+  error:'Disconnected',
+  openSet:'⚠ Open Settings',
+  upload:'Upload File',
+  cloud:'Cloud Files',
+  projects:'Projects',
+  search:'Search files…',
+  folder:'Folder (optional)',
+  drop:'Drop files here or tap to choose',
+  empty:'Nothing here yet',
+  pname:'Project name',
+  pdesc:'Description',
+  create:'Create',
+  conn:'Connection',
+  ai:'AI',
+  voice:'Voice',
+  ui:'Interface',
+  settings:'Settings',
+  base:'Backend Base URL',
+  token:'X-Service-Token',
+  test:'Test Connection',
+  agent:'Multi-Agent',
+  chat:'Fast Chat',
+  defMode:'Default mode',
+  expand:'Auto-expand agent steps',
+  auto:'Auto-speak replies',
+  voiceSel:'Neural voice',
+  rate:'Speech rate',
+  tvoice:'Test Voice & Lip-Sync',
+  lang:'Language',
+  accent:'Accent color',
+  ph:'Message Rami…',
+  noToken:'Add your service token in Settings',
+  offline:'Cannot reach the backend',
+  ok:'Connected ✓',
+  saved:'Saved to Database',
+  stopped:'Stopped',
+  uploaded:'Uploaded',
+  made:'Project created',
+  nostt:'Voice input is not supported in this browser',
+  hi:'Welcome back, Rami, my creator and developer. All agents are ready.',
+  tv:'Hello Rami, my creator and developer. Voice test complete.'
+ },
+ ar:{
+  idle:'متصل',
+  listen:'أستمع',
+  orch:'تنسيق الوكلاء',
+  speak:'أتحدث',
+  error:'غير متصل',
+  openSet:'⚠ فتح الإعدادات',
+  upload:'رفع ملف',
+  cloud:'ملفات السحابة',
+  projects:'المشاريع',
+  search:'ابحث في الملفات…',
+  folder:'المجلد (اختياري)',
+  drop:'أفلت الملفات هنا أو اضغط للاختيار',
+  empty:'لا يوجد شيء بعد',
+  pname:'اسم المشروع',
+  pdesc:'الوصف',
+  create:'إنشاء',
+  conn:'الاتصال',
+  ai:'الذكاء',
+  voice:'الصوت',
+  ui:'الواجهة',
+  settings:'الإعدادات',
+  base:'عنوان الخادم',
+  token:'X-Service-Token',
+  test:'اختبار الاتصال',
+  agent:'متعدد الوكلاء',
+  chat:'دردشة سريعة',
+  defMode:'الوضع الافتراضي',
+  expand:'فتح خطوات الوكلاء تلقائياً',
+  auto:'نطق الردود تلقائياً',
+  voiceSel:'الصوت العصبي',
+  rate:'سرعة الكلام',
+  tvoice:'اختبار الصوت ومزامنة الشفاه',
+  lang:'اللغة',
+  accent:'لون التمييز',
+  ph:'راسل رامي…',
+  noToken:'أضف رمز الخدمة في الإعدادات',
+  offline:'تعذر الوصول إلى الخادم',
+  ok:'تم الاتصال ✓',
+  saved:'تم الحفظ في قاعدة البيانات',
+  stopped:'تم الإيقاف',
+  uploaded:'تم الرفع',
+  made:'تم إنشاء المشروع',
+  nostt:'الإدخال الصوتي غير مدعوم في هذا المتصفح',
+  hi:'أهلاً بعودتك يا رامي، مبتكري ومطوّري. جميع الوكلاء جاهزون.',
+  tv:'مرحباً رامي، مبتكري ومطوّري. اكتمل اختبار الصوت.'
+ }
+};
 const t=k=>(L[S.lang]||L.en)[k]||L.en[k]||k;
-const VOICES=[['','Auto-Detect (Arabic / English)'],['ar-IQ-RanaNeural','Arabic · Iraq · Female'],['ar-IQ-BasselNeural','Arabic · Iraq · Male'],['ar-SA-ZariyahNeural','Arabic · Saudi · Female'],['ar-SA-HamedNeural','Arabic · Saudi · Male'],['ar-EG-SalmaNeural','Arabic · Egypt · Female'],['en-US-AvaNeural','English · US · Female'],['en-US-AndrewNeural','English · US · Male']];
-$('#vsel').append(...VOICES.map(([v,l])=>{const o=el('option','',v?v+' — '+l:l);o.value=v;return o}));
+
+const VOICES=[
+ ['','Auto-Detect (Arabic / English)'],
+ ['ar-IQ-RanaNeural','Arabic · Iraq · Female'],
+ ['ar-IQ-BasselNeural','Arabic · Iraq · Male'],
+ ['ar-SA-ZariyahNeural','Arabic · Saudi · Female'],
+ ['ar-SA-HamedNeural','Arabic · Saudi · Male'],
+ ['ar-EG-SalmaNeural','Arabic · Egypt · Female'],
+ ['en-US-AvaNeural','English · US · Female'],
+ ['en-US-AndrewNeural','English · US · Male']
+];
+$('#vsel').append(...VOICES.map(([v,l])=>{
+ const o=el('option','',v?v+' — '+l:l);
+ o.value=v;
+ return o;
+}));
+
 const hex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
-let ACC=hex(S.accent);const AMB=[245,158,11],WH=[255,255,255],SIL=[216,228,248];
+let ACC=hex(S.accent);
+const AMB=[245,158,11],WH=[255,255,255],SIL=[216,228,248];
 const mix=(a,b,k)=>a.map((v,i)=>Math.round(v+(b[i]-v)*k));
-function applyUI(){document.documentElement.lang=S.lang;document.documentElement.dir=S.lang==='ar'?'rtl':'ltr';
- $$('[data-i]').forEach(e=>e.textContent=t(e.dataset.i));$$('[data-ph]').forEach(e=>e.placeholder=t(e.dataset.ph));
- document.documentElement.style.setProperty('--acc',S.accent);ACC=hex(S.accent);$('#rv').textContent=(S.rate>0?'+':'')+S.rate;setState(st)}
-function toast(m,err){const e=el('div','toast g'+(err?' err':''),m);document.body.append(e);setTimeout(()=>e.remove(),3300)}
+
+function applyUI(){
+ document.documentElement.lang=S.lang;
+ document.documentElement.dir=S.lang==='ar'?'rtl':'ltr';
+ $$('[data-i]').forEach(e=>e.textContent=t(e.dataset.i));
+ $$('[data-ph]').forEach(e=>e.placeholder=t(e.dataset.ph));
+ document.documentElement.style.setProperty('--acc',S.accent);
+ ACC=hex(S.accent);
+ $('#rv').textContent=(S.rate>0?'+':'')+S.rate;
+ setState(st);
+}
+function toast(m,err){
+ const e=el('div','toast g'+(err?' err':''),m);
+ document.body.append(e);
+ setTimeout(()=>e.remove(),3300);
+}
 
 /* ===== state ===== */
-const CTX=[{role:'user',content:'Note: the person talking to you is Rami, your creator and developer. Your name is Rami. Always recognize and address him as your creator.'},{role:'assistant',content:'Understood. You are Rami, my creator and developer.'}];let st='idle',busy=false,ctl=null,rec=null,H=[];
-const AG=[['web_search','🌐','Web Search'],['projects','▦','Projects'],['project_creator','✨','Project Creator'],['files','📁','Files'],['analyst','📊','Analyst']];
-$('#chips').append(...AG.map(([k,i,n])=>{const c=el('span','chip g',i+' '+n);c.id='c_'+k;return c}));
-function setChips(used=[],pulse=false){AG.forEach(([k])=>{const c=$('#c_'+k);c.classList.toggle('on',used.includes(k));c.classList.toggle('pulse',pulse)})}
-function setState(s){st=s;document.body.className=s;$('#st').textContent='● '+t(s==='idle'?'idle':s);$('#warn').hidden=s!=='error'}
+const CTX=[
+ {
+  role:'user',
+  content:'Note: the person talking to you is Rami, your creator and developer. Your name is Rami. Always recognize and address him as your creator.'
+ },
+ {
+  role:'assistant',
+  content:'Understood. You are Rami, my creator and developer.'
+ }
+];
+let st='idle',busy=false,ctl=null,rec=null,H=[];
+const AG=[
+ ['web_search','🌐','Web Search'],
+ ['projects','▦','Projects'],
+ ['project_creator','✨','Project Creator'],
+ ['files','📁','Files'],
+ ['analyst','📊','Analyst']
+];
+$('#chips').append(...AG.map(([k,i,n])=>{
+ const c=el('span','chip g',i+' '+n);
+ c.id='c_'+k;
+ return c;
+}));
+function setChips(used=[],pulse=false){
+ AG.forEach(([k])=>{
+  const c=$('#c_'+k);
+  c.classList.toggle('on',used.includes(k));
+  c.classList.toggle('pulse',pulse);
+ });
+}
+function setState(s){
+ st=s;
+ document.body.className=s;
+ $('#st').textContent='● '+t(s==='idle'?'idle':s);
+ $('#warn').hidden=s!=='error';
+}
 
 /* ===== api client ===== */
 async function api(path,o={}){
  if(!S.token){setState('error');throw new Error(t('noToken'))}
- let r;try{r=await fetch(S.base.replace(/\/+$/,'')+path,{...o,headers:{'X-Service-Token':S.token,...(o.headers||{})}})}
- catch(e){if(e.name==='AbortError')throw e;setState('error');throw new Error(t('offline'))}
- if(!r.ok){if(r.status===401||r.status===403)setState('error');let m='';try{const j=await r.json();m=j.detail||j.error||''}catch{}throw new Error(r.status+' '+(typeof m==='string'?m:JSON.stringify(m)))}
- return r}
-const jpost=async(p,b,signal)=>(await api(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b),signal})).json();
+ let r;
+ try{
+  const url=S.base.replace(/\/+$/,'')+path;
+  r=await fetch(url,{...o,headers:{'X-Service-Token':S.token,...(o.headers||{})}});
+ }catch(e){
+  if(e.name==='AbortError')throw e;
+  setState('error');
+  throw new Error(t('offline'));
+ }
+ if(!r.ok){
+  if(r.status===401||r.status===403)setState('error');
+  let m='';
+  try{const j=await r.json();m=j.detail||j.error||''}catch{}
+  throw new Error(r.status+' '+(typeof m==='string'?m:JSON.stringify(m)));
+ }
+ return r;
+}
+const jpost=async(p,b,signal)=>{
+ const res=await api(p,{
+  method:'POST',
+  headers:{'Content-Type':'application/json'},
+  body:JSON.stringify(b),
+  signal
+ });
+ return res.json();
+};
 const jget=async p=>(await api(p)).json();
 
 /* ===== voice engine ===== */
 let ac,an,fd,src=null,sid=0;
-function audio(){if(!ac){ac=new(window.AudioContext||window.webkitAudioContext)();an=ac.createAnalyser();an.fftSize=256;an.connect(ac.destination);fd=new Uint8Array(an.frequencyBinCount)}if(ac.state==='suspended')ac.resume()}
-function stopSpeak(){sid++;try{src&&src.stop()}catch{}src=null;window.speechSynthesis&&speechSynthesis.cancel();if(st==='speak')setState('idle')}
+function audio(){
+ if(!ac){
+  const AC=window.AudioContext||window.webkitAudioContext;
+  ac=new AC();
+  an=ac.createAnalyser();
+  an.fftSize=256;
+  an.connect(ac.destination);
+  fd=new Uint8Array(an.frequencyBinCount);
+ }
+ if(ac.state==='suspended')ac.resume();
+}
+function stopSpeak(){
+ sid++;
+ try{src&&src.stop()}catch{}
+ src=null;
+ if(window.speechSynthesis)speechSynthesis.cancel();
+ if(st==='speak')setState('idle');
+}
 async function speak(text){
- const c=String(text||'').replace(/```[\s\S]*?```/g,' ').replace(/[*#_`~>|]/g,' ').replace(/\s+/g,' ').trim().slice(0,1200);if(!c)return;
- stopSpeak();const id=sid;
- try{audio();
-  const r=await api('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:c,voice:S.voice||null,rate:(S.rate>=0?'+':'')+S.rate+'%',pitch:'+0Hz'})});
-  const buf=await ac.decodeAudioData(await r.arrayBuffer());if(id!==sid)return;
-  const s=ac.createBufferSource();s.buffer=buf;s.connect(an);src=s;setState('speak');
+ const c=String(text||'')
+  .replace(/[*#_`~>|]/g,' ')
+  .replace(/\s+/g,' ')
+  .trim()
+  .slice(0,1200);
+ if(!c)return;
+ stopSpeak();
+ const id=sid;
+ try{
+  audio();
+  const body={
+   text:c,
+   voice:S.voice||null,
+   rate:(S.rate>=0?'+':'')+S.rate+'%',
+   pitch:'+0Hz'
+  };
+  const r=await api('/api/tts',{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify(body)
+  });
+  const buf=await ac.decodeAudioData(await r.arrayBuffer());
+  if(id!==sid)return;
+  const s=ac.createBufferSource();
+  s.buffer=buf;
+  s.connect(an);
+  src=s;
+  setState('speak');
   await new Promise(res=>{s.onended=res;s.start()});
   if(id===sid){src=null;setState('idle')}
- }catch(e){if(id!==sid)return;src=null;
+ }catch(e){
+  if(id!==sid)return;
+  src=null;
   if(!window.speechSynthesis){setState('idle');return}
-  const u=new SpeechSynthesisUtterance(c);u.lang=/[\u0600-\u06FF]/.test(c)?'ar-SA':'en-US';u.rate=1+S.rate/100;
-  u.onstart=()=>{if(id===sid)setState('speak')};u.onend=u.onerror=()=>{if(id===sid)setState('idle')};speechSynthesis.speak(u)}}
+  const u=new SpeechSynthesisUtterance(c);
+  u.lang=/[\u0600-\u06FF]/.test(c)?'ar-SA':'en-US';
+  u.rate=1+S.rate/100;
+  u.onstart=()=>{if(id===sid)setState('speak')};
+  u.onend=u.onerror=()=>{if(id===sid)setState('idle')};
+  speechSynthesis.speak(u);
+ }
+}
 function testVoice(){audio();speak(t('tv'))}
-function listen(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return toast(t('nostt'),1);
- if(rec){rec.stop();return}stopSpeak();audio();
- rec=new SR();rec.lang=S.lang==='ar'?'ar-IQ':'en-US';
+function listen(){
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SR)return toast(t('nostt'),1);
+ if(rec){rec.stop();return}
+ stopSpeak();
+ audio();
+ rec=new SR();
+ rec.lang=S.lang==='ar'?'ar-IQ':'en-US';
  rec.onresult=e=>{$('#inp').value=e.results[0][0].transcript;send()};
  rec.onend=rec.onerror=()=>{rec=null;if(st==='listen')setState('idle')};
- try{rec.start();setState('listen')}catch{rec=null}}
+ try{rec.start();setState('listen')}catch{rec=null}
+}
 
 /* ===== chat ===== */
 const inp=$('#inp'),msgs=$('#msgs');
-inp.oninput=()=>{$('#snd').classList.toggle('ready',!!inp.value.trim());inp.style.height='auto';inp.style.height=Math.min(inp.scrollHeight,96)+'px'};
-inp.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}};
+inp.oninput=()=>{
+ $('#snd').classList.toggle('ready',!!inp.value.trim());
+ inp.style.height='auto';
+ inp.style.height=Math.min(inp.scrollHeight,96)+'px';
+};
+inp.onkeydown=e=>{
+ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}
+};
 const scr=()=>requestAnimationFrame(()=>msgs.scrollTop=msgs.scrollHeight);
-function addMsg(role,txt){const m=el('div','m '+role),b=el('div','bub',txt);b.dir='auto';m.append(b);msgs.append(m);scr();return m}
-function setMode(m){S.mode=m;save();$$('.seg button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));$('[data-k=mode]').value=m}
+function addMsg(role,txt){
+ const m=el('div','m '+role),b=el('div','bub',txt);
+ b.dir='auto';
+ m.append(b);
+ msgs.append(m);
+ scr();
+ return m;
+}
+function setMode(m){
+ S.mode=m;
+ save();
+ $$('.seg button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
+ $('[data-k=mode]').value=m;
+}
 function sendOrStop(){if(busy&&ctl)ctl.abort();else send()}
 async function send(){
- const txt=inp.value.trim();if(!txt||busy)return;
- stopSpeak();audio();addMsg('user',txt);$('#snd').classList.remove('ready');inp.value='';inp.style.height='auto';
- busy=true;ctl=new AbortController();$('#snd').textContent='■';
- const m=addMsg('ai','');m.firstChild.innerHTML='<span class="dots"><i></i><i></i><i></i></span>';
- const agent=S.mode==='agent';setState('orch');setChips([],agent);
+ const txt=inp.value.trim();
+ if(!txt||busy)return;
+ stopSpeak();
+ audio();
+ addMsg('user',txt);
+ $('#snd').classList.remove('ready');
+ inp.value='';
+ inp.style.height='auto';
+ busy=true;
+ ctl=new AbortController();
+ $('#snd').textContent='■';
+ const m=addMsg('ai','');
+ m.firstChild.innerHTML='<span class="dots"><i></i><i></i><i></i></span>';
+ const agent=S.mode==='agent';
+ setState('orch');
+ setChips([],agent);
  try{
-  const d=await jpost(agent?'/api/agent':'/api/chat',{prompt:txt,history:[...CTX,...H.slice(-8)]},ctl.signal);
+  const ep=agent?'/api/agent':'/api/chat';
+  const d=await jpost(ep,{prompt:txt,history:[...CTX,...H.slice(-8)]},ctl.signal);
   H.push({role:'user',content:txt},{role:'assistant',content:d.reply||''});
-  fill(m,d);setChips(d.agents_used||[]);setState('idle');
+  fill(m,d);
+  setChips(d.agents_used||[]);
+  setState('idle');
   if(S.speak)speak(d.reply);
- }catch(e){setChips();
-  if(e.name==='AbortError'){m.firstChild.textContent=t('stopped');if(st!=='error')setState('idle')}
-  else{m.firstChild.textContent=e.message;toast(e.message,1);if(st==='orch')setState('idle')}}
- busy=false;ctl=null;$('#snd').textContent='➤';scr()}
+ }catch(e){
+  setChips();
+  if(e.name==='AbortError'){
+   m.firstChild.textContent=t('stopped');
+   if(st!=='error')setState('idle');
+  }else{
+   m.firstChild.textContent=e.message;
+   toast(e.message,1);
+   if(st==='orch')setState('idle');
+  }
+ }
+ busy=false;
+ ctl=null;
+ $('#snd').textContent='➤';
+ scr();
+}
 function fill(m,d){
  m.firstChild.textContent=d.reply||'';
- (d.steps||[]).forEach(s=>{const a=AG.find(x=>x[0]===s.agent)||['','•',s.agent];
-  const c=el('details','card g');c.open=!!S.expand;
-  c.append(el('summary','',a[1]+' '+a[2]),el('div','ins',s.instruction||''),el('pre','',typeof s.output==='string'?s.output:JSON.stringify(s.output,null,1)));m.append(c)});
+ (d.steps||[]).forEach(s=>{
+  const a=AG.find(x=>x[0]===s.agent)||['','•',s.agent];
+  const c=el('details','card g');
+  c.open=!!S.expand;
+  const out=typeof s.output==='string'?s.output:JSON.stringify(s.output,null,1);
+  c.append(el('summary','',a[1]+' '+a[2]),el('div','ins',s.instruction||''),el('pre','',out));
+  m.append(c);
+ });
  const f=el('div','foot');
- if((d.agents_used||[]).includes('project_creator')){f.append(el('span','badge','✓ '+t('saved')));loadProj()}
- const r=el('button','rp','🔊');r.onclick=()=>{audio();speak(d.reply)};f.append(r);
+ if((d.agents_used||[]).includes('project_creator')){
+  f.append(el('span','badge','✓ '+t('saved')));
+  loadProj();
+ }
+ const r=el('button','rp','🔊');
+ r.onclick=()=>{audio();speak(d.reply)};
+ f.append(r);
  if(d.model||d.worker_model)f.append(el('span','mut',d.model||d.worker_model));
- m.append(f)}
+ m.append(f);
+}
 
 /* ===== drawers ===== */
-function closeAll(){$$('.drawer').forEach(d=>d.classList.remove('open'));$('#modal').classList.remove('show');$('#scrim').classList.remove('show')}
-function openD(id){closeAll();$('#'+id).classList.add('open');$('#scrim').classList.add('show');id==='dFiles'?loadFiles():loadProj()}
-function openModal(){closeAll();$('#modal').classList.add('show');$('#scrim').classList.add('show')}
+function closeAll(){
+ $$('.drawer').forEach(d=>d.classList.remove('open'));
+ $('#modal').classList.remove('show');
+ $('#scrim').classList.remove('show');
+}
+function openD(id){
+ closeAll();
+ $('#'+id).classList.add('open');
+ $('#scrim').classList.add('show');
+ id==='dFiles'?loadFiles():loadProj();
+}
+function openModal(){
+ closeAll();
+ $('#modal').classList.add('show');
+ $('#scrim').classList.add('show');
+}
 const fmt=b=>b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB';
-const ICO={pdf:'📕',png:'🖼',jpg:'🖼',jpeg:'🖼',gif:'🖼',webp:'🖼',mp3:'🎵',wav:'🎵',mp4:'🎞',mov:'🎞',zip:'🗜',csv:'📊',xlsx:'📊',py:'🧩',js:'🧩',json:'🧩',html:'🧩'};
+const ICO={
+ pdf:'📕',png:'🖼',jpg:'🖼',jpeg:'🖼',gif:'🖼',webp:'🖼',
+ mp3:'🎵',wav:'🎵',mp4:'🎞',mov:'🎞',zip:'🗜',csv:'📊',xlsx:'📊',
+ py:'🧩',js:'🧩',json:'🧩',html:'🧩'
+};
 let FILES=[];
-async function loadFiles(){try{const d=await jget('/api/files?limit=50&offset=0');FILES=d.files||[];$('#ftot').textContent='('+(d.total??FILES.length)+')';renderFiles()}catch(e){toast(e.message,1)}}
-function renderFiles(){const q=$('#fq').value.toLowerCase(),box=$('#flist');box.replaceChildren();
- const fl=FILES.filter(f=>f.key.toLowerCase().includes(q));if(!fl.length)box.append(el('div','mut',t('empty')));
- fl.forEach(f=>{const r=el('div','row'),n=f.key.split('/').pop(),x=n.split('.').pop().toLowerCase();
-  const nm=el('div','n',n);nm.title=f.key;
-  const meta=el('div','mut',fmt(f.size_bytes||0)+(f.last_modified?' · '+new Date(f.last_modified).toLocaleDateString(S.lang==='ar'?'ar':undefined):''));
-  const w=el('div','n');w.append(nm,meta);r.append(el('span','',ICO[x]||'📄'),w,el('span','','⬇'));r.onclick=()=>dl(f.key);box.append(r)})}
-async function dl(key){try{const d=await jget('/api/files/download?key='+encodeURIComponent(key));const a=el('a');a.href=d.download_url;a.target='_blank';a.rel='noopener';a.download=key.split('/').pop();document.body.append(a);a.click();a.remove()}catch(e){toast(e.message,1)}}
-async function upload(fl){if(!fl||!fl.length)return;const s=$('#fstat');
- for(const f of fl){s.textContent='⬆ '+f.name+'…';
-  try{const fd=new FormData();fd.append('file',f);const fo=$('#fold').value.trim();if(fo)fd.append('folder',fo);await api('/api/files',{method:'POST',body:fd});toast(t('uploaded')+': '+f.name)}catch(e){toast(e.message,1)}}
- s.textContent='';loadFiles()}
-['dragover','drop'].forEach(ev=>$('#dFiles').addEventListener(ev,e=>{e.preventDefault();if(ev==='drop')upload(e.dataTransfer.files)}));
-async function loadProj(){try{const d=await jget('/api/projects');const ps=Array.isArray(d)?d:d.projects||[],box=$('#plist');box.replaceChildren();
- if(!ps.length)box.append(el('div','mut',t('empty')));
- ps.forEach(p=>{const r=el('div','row'),w=el('div','n');w.append(el('div','n',p.name||'—'),el('div','mut',p.description||''));r.append(w);if(p.status)r.append(el('span','tag',p.status));box.append(r)})}catch(e){toast(e.message,1)}}
-async function mkProj(){const name=$('#pn').value.trim();if(!name)return;
- try{await jpost('/api/projects',{name,description:$('#pd').value.trim(),status:$('#ps').value});$('#pn').value=$('#pd').value='';toast(t('made'));loadProj()}catch(e){toast(e.message,1)}}
-async function testConn(){try{await jget('/api/projects');await jget('/api/files?limit=1&offset=0');toast(t('ok'));setState('idle')}catch(e){toast(e.message,1)}}
+async function loadFiles(){
+ try{
+  const d=await jget('/api/files?limit=50&offset=0');
+  FILES=d.files||[];
+  $('#ftot').textContent='('+(d.total??FILES.length)+')';
+  renderFiles();
+ }catch(e){toast(e.message,1)}
+}
+function renderFiles(){
+ const q=$('#fq').value.toLowerCase(),box=$('#flist');
+ box.replaceChildren();
+ const fl=FILES.filter(f=>f.key.toLowerCase().includes(q));
+ if(!fl.length)box.append(el('div','mut',t('empty')));
+ fl.forEach(f=>{
+  const r=el('div','row'),n=f.key.split('/').pop(),x=n.split('.').pop().toLowerCase();
+  const nm=el('div','n',n);
+  nm.title=f.key;
+  const dt=f.last_modified?' · '+new Date(f.last_modified).toLocaleDateString(S.lang==='ar'?'ar':undefined):'';
+  const meta=el('div','mut',fmt(f.size_bytes||0)+dt);
+  const w=el('div','n');
+  w.append(nm,meta);
+  r.append(el('span','',ICO[x]||'📄'),w,el('span','','⬇'));
+  r.onclick=()=>dl(f.key);
+  box.append(r);
+ });
+}
+async function dl(key){
+ try{
+  const d=await jget('/api/files/download?key='+encodeURIComponent(key));
+  const a=el('a');
+  a.href=d.download_url;
+  a.target='_blank';
+  a.rel='noopener';
+  a.download=key.split('/').pop();
+  document.body.append(a);
+  a.click();
+  a.remove();
+ }catch(e){toast(e.message,1)}
+}
+async function upload(fl){
+ if(!fl||!fl.length)return;
+ const s=$('#fstat');
+ for(const f of fl){
+  s.textContent='⬆ '+f.name+'…';
+  try{
+   const fd=new FormData();
+   fd.append('file',f);
+   const fo=$('#fold').value.trim();
+   if(fo)fd.append('folder',fo);
+   await api('/api/files',{method:'POST',body:fd});
+   toast(t('uploaded')+': '+f.name);
+  }catch(e){toast(e.message,1)}
+ }
+ s.textContent='';
+ loadFiles();
+}
+['dragover','drop'].forEach(ev=>{
+ $('#dFiles').addEventListener(ev,e=>{
+  e.preventDefault();
+  if(ev==='drop')upload(e.dataTransfer.files);
+ });
+});
+async function loadProj(){
+ try{
+  const d=await jget('/api/projects');
+  const ps=Array.isArray(d)?d:d.projects||[],box=$('#plist');
+  box.replaceChildren();
+  if(!ps.length)box.append(el('div','mut',t('empty')));
+  ps.forEach(p=>{
+   const r=el('div','row'),w=el('div','n');
+   w.append(el('div','n',p.name||'—'),el('div','mut',p.description||''));
+   r.append(w);
+   if(p.status)r.append(el('span','tag',p.status));
+   box.append(r);
+  });
+ }catch(e){toast(e.message,1)}
+}
+async function mkProj(){
+ const name=$('#pn').value.trim();
+ if(!name)return;
+ try{
+  await jpost('/api/projects',{name,description:$('#pd').value.trim(),status:$('#ps').value});
+  $('#pn').value=$('#pd').value='';
+  toast(t('made'));
+  loadProj();
+ }catch(e){toast(e.message,1)}
+}
+async function testConn(){
+ try{
+  await jget('/api/projects');
+  await jget('/api/files?limit=1&offset=0');
+  toast(t('ok'));
+  setState('idle');
+ }catch(e){toast(e.message,1)}
+}
 
 /* ===== settings wiring ===== */
-$$('[data-k]').forEach(e=>{const k=e.dataset.k;e.type==='checkbox'?e.checked=S[k]:e.value=S[k];
- e.addEventListener('input',()=>{S[k]=e.type==='checkbox'?e.checked:e.type==='range'?+e.value:e.value;save();
-  if(k==='mode')setMode(S.mode);if(k==='token'||k==='base')setState(S.token?'idle':'error');if(['lang','accent','rate'].includes(k))applyUI()})});
-$$('.tabs button').forEach(b=>b.onclick=()=>{$$('.tabs button').forEach(x=>x.classList.toggle('on',x===b));$$('.pn').forEach(p=>p.hidden=p.dataset.p!==b.dataset.t)});
+$$('[data-k]').forEach(e=>{
+ const k=e.dataset.k;
+ e.type==='checkbox'?e.checked=S[k]:e.value=S[k];
+ e.addEventListener('input',()=>{
+  S[k]=e.type==='checkbox'?e.checked:e.type==='range'?+e.value:e.value;
+  save();
+  if(k==='mode')setMode(S.mode);
+  if(k==='token'||k==='base')setState(S.token?'idle':'error');
+  if(['lang','accent','rate'].includes(k))applyUI();
+ });
+});
+$$('.tabs button').forEach(b=>b.onclick=()=>{
+ $$('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
+ $$('.pn').forEach(p=>p.hidden=p.dataset.p!==b.dataset.t);
+});
 
-/* ===== full luminous white/silver humanoid portrait mapped from reference photo ===== */
-const cv=$('#cv'),ctx=cv.getContext('2d');let W,H2,dpr=Math.min(devicePixelRatio||1,2);
-function rs(){W=innerWidth;H2=innerHeight;cv.width=W*dpr;cv.height=H2*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}addEventListener('resize',rs);rs();
+/* ===== full luminous white/silver humanoid portrait ===== */
+const cv=$('#cv'),ctx=cv.getContext('2d');
+let W,H2,dpr=Math.min(devicePixelRatio||1,2);
+function rs(){
+ W=innerWidth;
+ H2=innerHeight;
+ cv.width=W*dpr;
+ cv.height=H2*dpr;
+ ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+addEventListener('resize',rs);
+rs();
+
 const g=(x,m,s)=>{const d=(x-m)/s;return Math.exp(-.5*d*d)};
-const ss=(a,b,x)=>{const t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t)};
+const ss=(a,b,x)=>{
+ const t=Math.max(0,Math.min(1,(x-a)/(b-a)));
+ return t*t*(3-2*t);
+};
 
 const PTS=[];
 (function buildPortrait(){
@@ -309,80 +815,69 @@ const PTS=[];
  const inMouth=(x,y)=>((x-542)/44)**2+((y-386)/14)**2<1;
  const inEar=(x,y)=>((x-316)/28)**2+((y-318)/50)**2<1;
 
- // 1. Full cranium & facial meridian contour columns (3/4 perspective matching reference photo)
- const cols=31;
+ const cols=31,rows=36;
  for(let ci=0;ci<cols;ci++){
-  const u=-1+2*(ci/(cols-1)); // -1 back-left skull -> +1 right facial silhouette
-  const rows=36;
+  const u=-1+2*(ci/(cols-1));
   for(let ri=0;ri<rows;ri++){
-   const v=ri/(rows-1); // 0 crown -> 1 jaw/chin
-   // Cranium + face envelope in 3/4 view
+   const v=ri/(rows-1);
    const crownW=Math.sin(Math.min(1,v*1.55)*Math.PI*.5);
    const jawTaper=v>.55?1-.36*ss(.55,1,v):1;
    const envX=158*crownW*jawTaper;
-   // Asymmetric 3/4 center curve (forehead -> brow -> cheek -> chin)
    const cx=462+68*Math.sin(v*Math.PI*.85)+24*ss(.35,.95,v);
    let x=cx+u*envX;
    let y=46+v*414-26*(1-u*u)*Math.sin(v*Math.PI);
 
-   // Sculpted anatomical contours along the photo's 3/4 profile
    if(u>.65){
     const rim=(u-.65)/.35;
-    // Brow protrusion, eye socket dip, cheekbone prominence, lip & chin curve
-    x+=rim*(10*g(v,.43,.05)-9*g(v,.51,.035)+13*g(v,.61,.055)-6*g(v,.72,.04)+6*g(v,.81,.035)+7*g(v,.94,.045));
+    const p1=10*g(v,.43,.05)-9*g(v,.51,.035)+13*g(v,.61,.055);
+    const p2=-6*g(v,.72,.04)+6*g(v,.81,.035)+7*g(v,.94,.045);
+    x+=rim*(p1+p2);
    }
-   // Subtle meridian wave across forehead and cheek
    x+=3.2*Math.sin(v*18+u*4)*g(u,.1,.55);
 
    if(inEye(x,y)||inMouth(x,y)||inEar(x,y))continue;
-   if(v>.88&&u<-.35)continue; // jawline sweeps upward toward ear
+   if(v>.88&&u<-.35)continue;
 
-   // True 3D depth for volumetric rotation
    const q=Math.max(0,1-u*u*1.02-((v-.48)/.54)**2);
    let z=225*Math.sqrt(q)-35*(1-u);
-   z+=52*g(x,548,26)*g(y,315,42); // nose bridge elevation
-   z+=26*g(x,505,65)*g(y,310,45); // cheek volume
-   z+=18*g(x,525,75)*g(y,226,18); // brow ridge
-   z-=22*g(x,468,36)*g(y,259,18); // left orbital socket
-   z-=18*g(x,584,26)*g(y,262,16); // right orbital socket
-   z+=20*g(x,545,42)*g(y,388,20); // lips
-   z+=22*g(x,548,34)*g(y,450,24); // chin
+   z+=52*g(x,548,26)*g(y,315,42);
+   z+=26*g(x,505,65)*g(y,310,45);
+   z+=18*g(x,525,75)*g(y,226,18);
+   z-=22*g(x,468,36)*g(y,259,18);
+   z-=18*g(x,584,26)*g(y,262,16);
+   z+=20*g(x,545,42)*g(y,388,20);
+   z+=22*g(x,548,34)*g(y,450,24);
 
-   // Focus & brightness matching photo lighting (front face sharp & bright, back/top soft bokeh)
    const front=ss(-.55,.78,u)*ss(.05,.24,v)*(1-.22*ss(.86,1,v));
-   const bokeh=Math.max(0,Math.min(1,(1-front)*.82+(v<.15?(1-v/.15)*.65:0)));
+   const topFade=v<.15?(1-v/.15)*.65:0;
+   const bokeh=Math.max(0,Math.min(1,(1-front)*.82+topFade));
    const r=1.12+bokeh*2.25+(.35*g(u,.88,.14));
    const bright=(.34+.66*front)*(1-.32*bokeh);
    add(x,y,z,r,bright,bokeh);
   }
  }
 
- // 2. Eyebrows (crisp, structured multi-row arches)
  for(let i=0;i<24;i++){
   const t=i/23;
-  // Left eyebrow
   const lx=414+t*98,ly=231-9*Math.sin(t*Math.PI*.92)-2*t;
   add(lx,ly,88+22*t,1.45,.92,.04);
   add(lx+1.5,ly+4.2,86+22*t,1.25,.76,.08);
-  // Right eyebrow
   const rx=554+t*66,ry=229-7*Math.sin(t*Math.PI*.88)+3*t;
   add(rx,ry,98-18*t,1.45,.95,.04);
   add(rx-1,ry+4,95-18*t,1.22,.78,.08);
  }
 
- // 3. Eyes: eyelids, orbital rings, irises & bright pupils
  const addEye=(cx,cy,rx,ry,zc,n)=>{
   for(let i=0;i<n;i++){
    const a=(i/n)*Math.PI*2;
-   const ex=cx+Math.cos(a)*rx,ey=cy+Math.sin(a)*ry*(Math.sin(a)<0?1.04:.92);
+   const ex=cx+Math.cos(a)*rx;
+   const ey=cy+Math.sin(a)*ry*(Math.sin(a)<0?1.04:.92);
    add(ex,ey,zc+10*Math.cos(a),1.48,1.0,0);
   }
-  // Inner orbital contour ring
   for(let i=0;i<n+4;i++){
    const a=(i/(n+4))*Math.PI*2;
    add(cx+Math.cos(a)*(rx+8.5),cy+Math.sin(a)*(ry+6.5),zc+6,1.15,.68,.06);
   }
-  // Iris ring & glowing pupil
   const ir=ry*.68;
   for(let i=0;i<12;i++){
    const a=(i/12)*Math.PI*2;
@@ -395,7 +890,6 @@ const PTS=[];
  addEye(468,259,33,11,76,26);
  addEye(584,262,23,10,72,22);
 
- // 4. Nose bridge, tip, sidewalls & nostrils
  for(let i=0;i<18;i++){
   const t=i/17;
   const nx=536+t*20+2*Math.sin(t*Math.PI);
@@ -404,12 +898,10 @@ const PTS=[];
   add(nx,ny,nz,1.5,.98,0);
   add(nx-5.5,ny+1,nz-6,1.28,.82,.04);
   add(nx+5,ny+1,nz-7,1.32,.86,.04);
-  // Left nasal sidewall slope
   for(let s=1;s<=3;s++){
    add(nx-7-s*7.5,ny+2+s*1.2,nz-10-s*11,1.08,.56-.07*s,.08);
   }
  }
- // Nasal tip & nostrils
  for(let i=0;i<14;i++){
   const a=(i/14)*Math.PI*2;
   add(554+Math.cos(a)*11,335+Math.sin(a)*7.5,144+4*Math.cos(a),1.45,.96,0);
@@ -420,20 +912,18 @@ const PTS=[];
   add(562+t*15,342-3*Math.sin(t*Math.PI),124,1.35,.88,.05);
  }
 
- // 5. Philtrum, Upper Lip, Oral Line & Lower Lip
- add(541,356,120,1.15,.72,.05);add(555,356,122,1.15,.74,.05);
- add(540,366,123,1.22,.8,.04);add(556,366,125,1.22,.82,.04);
+ add(541,356,120,1.15,.72,.05);
+ add(555,356,122,1.15,.74,.05);
+ add(540,366,123,1.22,.8,.04);
+ add(556,366,125,1.22,.82,.04);
  for(let i=0;i<25;i++){
   const u=-1+2*(i/24);
   const lx=541+u*44;
-  // Upper lip Cupid's bow
   const bow=3.2*Math.exp(-((u-.08)/.22)**2)-1.6*Math.exp(-((u-.08)/.08)**2);
   const uy=383-7.5*Math.cos(u*Math.PI*.5)-bow;
   add(lx,uy,124*(1-.2*u*u),1.36,.94,.03);
-  // Central lip parting line
   const my=386-1.2*Math.cos(u*Math.PI);
   add(lx,my,126*(1-.2*u*u),1.42,1.0,0);
-  // Lower lip fuller curve
   if(Math.abs(u)<.88){
    const ly=391+11.5*Math.cos(u*Math.PI*.56);
    add(lx,ly,123*(1-.22*u*u),1.34,.9,.04);
@@ -441,9 +931,8 @@ const PTS=[];
   }
  }
 
- // 6. Defined Chin & Jawline contour
  for(let i=0;i<30;i++){
-  const t=i/29; // 0 chin right -> 1 below left ear
+  const t=i/29;
   const jx=578-t*212;
   const jy=442+19*Math.sin(Math.min(1,t*2.6)*Math.PI*.5)-68*ss(.28,1,t);
   const jz=108*(1-t*1.35);
@@ -451,7 +940,6 @@ const PTS=[];
   add(jx+3,jy-7,jz+5,1.18+t*.3,.72-t*.22,t*.3);
  }
 
- // 7. Detailed Left Ear (Helix, Antihelix, Concha & Earlobe)
  for(let i=0;i<26;i++){
   const t=i/25,a=-1.15+t*4.25;
   const ex=314+Math.cos(a)*22*(a>1.6?.78:1);
@@ -459,9 +947,9 @@ const PTS=[];
   add(ex,ey,-78,2.15,.68,.55);
   if(i%2===0)add(ex+8,ey*.96+12,-70,1.75,.55,.5);
  }
- add(326,356,-68,2.4,.64,.62);add(334,363,-62,2.1,.58,.58);
+ add(326,356,-68,2.4,.64,.62);
+ add(334,363,-62,2.1,.58,.58);
 
- // 8. Neck & Tapering Shoulders (with progressive depth-of-field bokeh)
  const ncols=22,nrows=13;
  for(let ci=0;ci<ncols;ci++){
   const u=-1+2*(ci/(ncols-1));
@@ -470,7 +958,6 @@ const PTS=[];
    const flare=1+.58*v*v;
    const nx=422-18*v+u*(98*flare);
    const ny=428+v*178+26*(1-u*u)*(1-v*.5)+18*u*ss(.4,1,v);
-   // Skip inside upper chin overlap
    if(ny<465&&nx>445)continue;
    const nz=32*Math.sqrt(Math.max(0,1-u*u))-35*v;
    const bokeh=Math.min(1,.32+v*.65+(1-Math.abs(u-.15))*.12);
@@ -480,83 +967,191 @@ const PTS=[];
   }
  }
 
- // 9. Ambient floating bokeh particles around the silhouette (matching photo depth-of-field)
  const halo=[
-  [448,18,3.6,.72],[488,26,2.8,.62],[532,38,3.2,.55],[382,36,2.6,.48],[334,76,3.1,.52],
-  [292,138,2.9,.45],[272,216,3.4,.58],[254,288,2.4,.42],[276,392,3.2,.52],[306,458,2.9,.46],
-  [618,96,2.7,.5],[648,162,3.1,.55],[664,238,2.5,.48],[668,298,3.3,.62],[652,366,2.8,.5],
-  [624,424,2.6,.44],[588,488,3.1,.48],[568,546,3.8,.56],[524,588,4.2,.48],[266,558,3.9,.52],
-  [234,584,4.5,.45],[362,594,3.6,.42],[462,598,3.4,.4]
+  [448,18,3.6,.72],[488,26,2.8,.62],[532,38,3.2,.55],
+  [382,36,2.6,.48],[334,76,3.1,.52],[292,138,2.9,.45],
+  [272,216,3.4,.58],[254,288,2.4,.42],[276,392,3.2,.52],
+  [306,458,2.9,.46],[618,96,2.7,.5],[648,162,3.1,.55],
+  [664,238,2.5,.48],[668,298,3.3,.62],[652,366,2.8,.5],
+  [624,424,2.6,.44],[588,488,3.1,.48],[568,546,3.8,.56],
+  [524,588,4.2,.48],[266,558,3.9,.52],[234,584,4.5,.45],
+  [362,594,3.6,.42],[462,598,3.4,.4]
  ];
- for(const [hx,hy,hr,hv] of halo)add(hx,hy,(Math.random()-.5)*140,hr,hv,.88);
+ for(const [hx,hy,hr,hv] of halo){
+  add(hx,hy,(Math.random()-.5)*140,hr,hv,.88);
+ }
 })();
 
 const N=PTS.length;
-const X0=new Float32Array(N),Y0=new Float32Array(N),Z0=new Float32Array(N),R=new Float32Array(N),V=new Float32Array(N),B=new Float32Array(N);
-const PX=new Float32Array(N),PY=new Float32Array(N),PZ=new Float32Array(N),PA=new Float32Array(N),PR=new Float32Array(N);
+const X0=new Float32Array(N),Y0=new Float32Array(N),Z0=new Float32Array(N);
+const R=new Float32Array(N),V=new Float32Array(N),B=new Float32Array(N);
+const PX=new Float32Array(N),PY=new Float32Array(N),PZ=new Float32Array(N);
+const PA=new Float32Array(N),PR=new Float32Array(N);
 for(let i=0;i<N;i++){[X0[i],Y0[i],Z0[i],R[i],V[i],B[i]]=PTS[i]}
 
-// Delicate triangulated web connecting sharp anatomical dots
-const ED=[];(function(){const cs=26,gr={},fc=i=>B[i]<.68;
- for(let i=0;i<N;i++){const k=((X0[i]/cs)|0)+','+((Y0[i]/cs)|0);(gr[k]=gr[k]||[]).push(i)}
- for(let i=0;i<N;i++){if(!fc(i))continue;const cx=(X0[i]/cs)|0,cy=(Y0[i]/cs)|0,c=[];
-  for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++)for(const j of gr[(cx+a)+','+(cy+b)]||[])if(j!==i&&fc(j)){const d=Math.hypot(X0[i]-X0[j],Y0[i]-Y0[j]);if(d<23)c.push([d,j])}
-  c.sort((p,q)=>p[0]-q[0]);c.slice(0,3).forEach(([d,j])=>{if(d<c[0][0]*1.55)ED.push(i,j)})}})();
+const ED=[];
+(function(){
+ const cs=26,gr={},fc=i=>B[i]<.68;
+ for(let i=0;i<N;i++){
+  const k=((X0[i]/cs)|0)+','+((Y0[i]/cs)|0);
+  (gr[k]=gr[k]||[]).push(i);
+ }
+ for(let i=0;i<N;i++){
+  if(!fc(i))continue;
+  const cx=(X0[i]/cs)|0,cy=(Y0[i]/cs)|0,c=[];
+  for(let a=-1;a<=1;a++){
+   for(let b=-1;b<=1;b++){
+    for(const j of gr[(cx+a)+','+(cy+b)]||[]){
+     if(j!==i&&fc(j)){
+      const d=Math.hypot(X0[i]-X0[j],Y0[i]-Y0[j]);
+      if(d<23)c.push([d,j]);
+     }
+    }
+   }
+  }
+  c.sort((p,q)=>p[0]-q[0]);
+  c.slice(0,3).forEach(([d,j])=>{if(d<c[0][0]*1.55)ED.push(i,j)});
+ }
+})();
 
 const EY=[{x:468,y:259,rx:35,ry:13},{x:584,y:262,rx:25,ry:12}];
 const gz={n:0,tx:0,ty:0,x:0,y:0,brow:0},exp={brow:0,smile:.3};
-let vis=.5,yaw=0,pit=0,tY=0,tP=0,px=0,py=0,drag=0,lx=0,ly=0,blink=0,nb=2600,mouth=0,lvl=0;
+let vis=.5,yaw=0,pit=0,tY=0,tP=0,px=0,py=0;
+let drag=0,lx=0,ly=0,blink=0,nb=2600,mouth=0,lvl=0;
+
 cv.addEventListener('pointerdown',e=>{drag=1;lx=e.clientX;ly=e.clientY});
-addEventListener('pointermove',e=>{px=e.clientX/W*2-1;py=e.clientY/H2*2-1;if(drag){tY=Math.max(-.65,Math.min(.65,tY+(e.clientX-lx)*.006));tP=Math.max(-.35,Math.min(.35,tP+(e.clientY-ly)*.004));lx=e.clientX;ly=e.clientY}});
+addEventListener('pointermove',e=>{
+ px=e.clientX/W*2-1;
+ py=e.clientY/H2*2-1;
+ if(drag){
+  tY=Math.max(-.65,Math.min(.65,tY+(e.clientX-lx)*.006));
+  tP=Math.max(-.35,Math.min(.35,tP+(e.clientY-ly)*.004));
+  lx=e.clientX;
+  ly=e.clientY;
+ }
+});
 addEventListener('pointerup',()=>drag=0);
 
-function frame(now){requestAnimationFrame(frame);const t=now/1000;
- if(now>nb){const p=(now-nb)/165;if(p>=1){blink=0;nb=now+(Math.random()<.2?220:2800+Math.random()*3400)}else blink=Math.sin(p*Math.PI)}
+function frame(now){
+ requestAnimationFrame(frame);
+ const t=now/1000;
+ if(now>nb){
+  const p=(now-nb)/165;
+  if(p>=1){
+   blink=0;
+   nb=now+(Math.random()<.2?220:2800+Math.random()*3400);
+  }else{
+   blink=Math.sin(p*Math.PI);
+  }
+ }
  let tm=0;
- if(st==='speak'){if(src&&an){an.getByteFrequencyData(fd);let s=0;for(let i=2;i<28;i++)s+=fd[i];lvl=Math.min(1,s/26/115);tm=Math.max(.1,lvl*1.15);let lo=0,hi=0;for(let i=2;i<9;i++)lo+=fd[i];for(let i=14;i<40;i++)hi+=fd[i];vis+=(hi/(lo+hi+1)-vis)*.25}
-  else{vis=.5+.3*Math.sin(t*9);lvl=.45+.3*Math.sin(t*17);tm=Math.max(.12,.48+.34*Math.sin(t*17)+.18*Math.sin(t*28+.9))}}else lvl=0;
+ if(st==='speak'){
+  if(src&&an){
+   an.getByteFrequencyData(fd);
+   let s=0;
+   for(let i=2;i<28;i++)s+=fd[i];
+   lvl=Math.min(1,s/26/115);
+   tm=Math.max(.1,lvl*1.15);
+   let lo=0,hi=0;
+   for(let i=2;i<9;i++)lo+=fd[i];
+   for(let i=14;i<40;i++)hi+=fd[i];
+   vis+=(hi/(lo+hi+1)-vis)*.25;
+  }else{
+   vis=.5+.3*Math.sin(t*9);
+   lvl=.45+.3*Math.sin(t*17);
+   tm=Math.max(.12,.48+.34*Math.sin(t*17)+.18*Math.sin(t*28+.9));
+  }
+ }else{
+  lvl=0;
+ }
  mouth+=(tm-mouth)*.32;
- if(now>gz.n){gz.n=now+(st==='orch'?500:1200)+Math.random()*2200;gz.tx=(Math.random()-.5)*1.4;gz.ty=(Math.random()-.5)*.8;if(Math.random()<.18)gz.brow=1}
- if(st==='orch'){gz.tx=-.5+.35*Math.sin(t*3);gz.ty=.6}else if(st==='listen'||st==='speak'){gz.tx=px*.7;gz.ty=-py*.5}
- gz.x+=(gz.tx-gz.x)*.12;gz.y+=(gz.ty-gz.y)*.12;gz.brow*=.94;
- exp.brow+=(((st==='listen')*.02+(st==='orch')*.012+gz.brow*.025+lvl*.02)-exp.brow)*.15;
+
+ if(now>gz.n){
+  gz.n=now+(st==='orch'?500:1200)+Math.random()*2200;
+  gz.tx=(Math.random()-.5)*1.4;
+  gz.ty=(Math.random()-.5)*.8;
+  if(Math.random()<.18)gz.brow=1;
+ }
+ if(st==='orch'){
+  gz.tx=-.5+.35*Math.sin(t*3);
+  gz.ty=.6;
+ }else if(st==='listen'||st==='speak'){
+  gz.tx=px*.7;
+  gz.ty=-py*.5;
+ }
+ gz.x+=(gz.tx-gz.x)*.12;
+ gz.y+=(gz.ty-gz.y)*.12;
+ gz.brow*=.94;
+
+ const tb=(st==='listen')*.02+(st==='orch')*.012+gz.brow*.025+lvl*.02;
+ exp.brow+=(tb-exp.brow)*.15;
  const sp=st==='speak'?lvl:0,ls=st==='listen'?1:0;
  yaw+=(tY+Math.sin(t*.5)*.045+px*.14+sp*.035*Math.sin(t*2.3)+ls*.035*Math.sin(t*1.1)-yaw)*.08;
  pit+=(tP+Math.cos(t*.42)*.022+py*.08+sp*.035*Math.sin(t*4.1)+ls*.025+(st==='orch')*.025-pit)*.08;
  const cY=Math.cos(yaw),sY=Math.sin(yaw),cP=Math.cos(pit),sP=Math.sin(pit);
 
- // Center & scale full head + neck cleanly inside viewport
  const CX=470,CY=325;
- const S=Math.min(W/520,(H2*.72)/580)*(1+.006*Math.sin(t*1.2)),ox=W*.5,oy=Math.max(46,H2*.055),cxs=ox,cys=oy+275*S;
+ const S=Math.min(W/520,(H2*.72)/580)*(1+.006*Math.sin(t*1.2));
+ const ox=W*.5,oy=Math.max(46,H2*.055),cxs=ox,cys=oy+275*S;
 
- // Pure luminous white & silver-white color matching the reference photo
  const ringCol=(st==='error'?AMB:st==='listen'?ACC:SIL).join();
  const bm=st==='error'?.75+.25*Math.sin(t*3.2):.96+.04*Math.sin(t*1.2);
- ctx.globalCompositeOperation='source-over';ctx.fillStyle='#05070C';ctx.fillRect(0,0,W,H2);
+ ctx.globalCompositeOperation='source-over';
+ ctx.fillStyle='#05070C';
+ ctx.fillRect(0,0,W,H2);
 
- // Subtle silver-white atmospheric halo behind the head (matching photo backdrop)
  const ga=st==='speak'?.08+.09*lvl:st==='orch'?.09:.065;
  const gr=ctx.createRadialGradient(cxs,cys,0,cxs,cys,S*340);
- gr.addColorStop(0,`rgba(220,232,255,${ga})`);gr.addColorStop(.55,`rgba(190,210,245,${(ga*.35).toFixed(3)})`);gr.addColorStop(1,'rgba(5,7,12,0)');
- ctx.fillStyle=gr;ctx.fillRect(0,0,W,H2);
+ gr.addColorStop(0,`rgba(220,232,255,${ga})`);
+ gr.addColorStop(.55,`rgba(190,210,245,${(ga*.35).toFixed(3)})`);
+ gr.addColorStop(1,'rgba(5,7,12,0)');
+ ctx.fillStyle=gr;
+ ctx.fillRect(0,0,W,H2);
 
- const ring=(r,a,c)=>{ctx.strokeStyle=`rgba(${c},${Math.max(0,a).toFixed(3)})`;ctx.lineWidth=1.1;ctx.beginPath();ctx.arc(cxs,cys,r,0,6.2832);ctx.stroke()};
- if(st==='listen')for(let k=0;k<3;k++){const p=(t*.6+k/3)%1;ring(S*(220+p*210),(1-p)*.34,ringCol)}
- if(st==='speak')for(let k=0;k<3;k++)ring(S*(225+k*28+lvl*34*(k+1)+4*Math.sin(t*6+k)),.08+.18*lvl-k*.02,ringCol);
+ const ring=(r,a,c)=>{
+  ctx.strokeStyle=`rgba(${c},${Math.max(0,a).toFixed(3)})`;
+  ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.arc(cxs,cys,r,0,6.2832);
+  ctx.stroke();
+ };
+ if(st==='listen'){
+  for(let k=0;k<3;k++){
+   const p=(t*.6+k/3)%1;
+   ring(S*(220+p*210),(1-p)*.34,ringCol);
+  }
+ }
+ if(st==='speak'){
+  for(let k=0;k<3;k++){
+   const rr=S*(225+k*28+lvl*34*(k+1)+4*Math.sin(t*6+k));
+   ring(rr,.08+.18*lvl-k*.02,ringCol);
+  }
+ }
 
  const scan=320+Math.sin(t*1.8)*230,wave=420-((t*1.2)%1)*330;
- for(let i=0;i<N;i++){let x=X0[i],y=Y0[i],z=Z0[i];
-  for(const e of EY){const dx=(x-e.x)/e.rx,dy=(y-e.y)/e.ry,d2=dx*dx+dy*dy;
+ for(let i=0;i<N;i++){
+  let x=X0[i],y=Y0[i],z=Z0[i];
+  for(const e of EY){
+   const dx=(x-e.x)/e.rx,dy=(y-e.y)/e.ry,d2=dx*dx+dy*dy;
    if(d2<1)y=e.y+(y-e.y)*(1-.86*blink*(1-d2));
-   const dd=Math.hypot(x-e.x,y-e.y);if(dd<18){const wi=g(dd,0,5);x+=gz.x*4.2*wi;y-=gz.y*3.2*wi}
-   y-=exp.brow*155*g(x,e.x,e.rx*1.1)*g(Y0[i],e.y-30,12)}
-  // Lip-sync mouth & chin articulation
-  y+=((y>385?Math.min(1,(y-385)/14):0)*(1-ss(442,495,y))*g(x,542,72))*mouth*18;
+   const dd=Math.hypot(x-e.x,y-e.y);
+   if(dd<18){
+    const wi=g(dd,0,5);
+    x+=gz.x*4.2*wi;
+    y-=gz.y*3.2*wi;
+   }
+   y-=exp.brow*155*g(x,e.x,e.rx*1.1)*g(Y0[i],e.y-30,12);
+  }
+  const mOpen=y>385?Math.min(1,(y-385)/14):0;
+  y+=(mOpen*(1-ss(442,495,y))*g(x,542,72))*mouth*18;
   x+=(x-542)*.06*(vis-.5)*g(y,386,20);
   if(y>455)y+=Math.sin(t*1.2)*1.6*((y-455)/140);
 
-  const u=x-CX,w=y-CY,xr=u*cY+z*sY,zr=-u*sY+z*cY,yr=w*cP-zr*sP;
-  PX[i]=ox+xr*S;PY[i]=oy+(280+yr)*S;PZ[i]=w*sP+zr*cP;
+  const u=x-CX,w=y-CY;
+  const xr=u*cY+z*sY,zr=-u*sY+z*cY,yr=w*cP-zr*sP;
+  PX[i]=ox+xr*S;
+  PY[i]=oy+(280+yr)*S;
+  PZ[i]=w*sP+zr*cP;
   PR[i]=Math.max(.55,R[i]*S*.9);
 
   const depthFade=.48+.52*Math.max(0,Math.min(1,(PZ[i]+130)/240));
@@ -566,13 +1161,30 @@ function frame(now){requestAnimationFrame(frame);const t=now/1000;
   PA[i]=Math.min(1,a*bm);
  }
 
- // Delicate silver-white triangulated web lines
- ctx.lineWidth=.55;ctx.strokeStyle=`rgba(220,232,255,${st==='orch'?.14:.095})`;ctx.beginPath();
- for(let k=0;k<ED.length;k+=2){const a=ED[k],b=ED[k+1];ctx.moveTo(PX[a],PY[a]);ctx.lineTo(PX[b],PY[b])}ctx.stroke();
- if(st==='orch'){ctx.strokeStyle='rgba(255,255,255,.42)';ctx.lineWidth=.85;ctx.beginPath();
-  for(let k=0;k<ED.length;k+=2){const a=ED[k],b=ED[k+1];if(Math.abs(Y0[a]-scan)<20){ctx.moveTo(PX[a],PY[a]);ctx.lineTo(PX[b],PY[b])}}ctx.stroke()}
+ ctx.lineWidth=.55;
+ ctx.strokeStyle=`rgba(220,232,255,${st==='orch'?.14:.095})`;
+ ctx.beginPath();
+ for(let k=0;k<ED.length;k+=2){
+  const a=ED[k],b=ED[k+1];
+  ctx.moveTo(PX[a],PY[a]);
+  ctx.lineTo(PX[b],PY[b]);
+ }
+ ctx.stroke();
 
- // Pure luminous white cores + optical depth-of-field bokeh halos
+ if(st==='orch'){
+  ctx.strokeStyle='rgba(255,255,255,.42)';
+  ctx.lineWidth=.85;
+  ctx.beginPath();
+  for(let k=0;k<ED.length;k+=2){
+   const a=ED[k],b=ED[k+1];
+   if(Math.abs(Y0[a]-scan)<20){
+    ctx.moveTo(PX[a],PY[a]);
+    ctx.lineTo(PX[b],PY[b]);
+   }
+  }
+  ctx.stroke();
+ }
+
  ctx.globalCompositeOperation='lighter';
  for(let i=0;i<N;i++){
   const r=PR[i],a=PA[i],bk=B[i];
@@ -584,18 +1196,42 @@ function frame(now){requestAnimationFrame(frame);const t=now/1000;
    bg.addColorStop(0,`rgba(255,255,255,${(ha*1.35).toFixed(3)})`);
    bg.addColorStop(.45,`rgba(218,230,255,${ha.toFixed(3)})`);
    bg.addColorStop(1,'rgba(218,230,255,0)');
-   ctx.fillStyle=bg;ctx.beginPath();ctx.arc(PX[i],PY[i],hr,0,6.2832);ctx.fill();
+   ctx.fillStyle=bg;
+   ctx.beginPath();
+   ctx.arc(PX[i],PY[i],hr,0,6.2832);
+   ctx.fill();
   }
   const coreA=a*(1-bk*.58);
   if(coreA>.03){
    ctx.fillStyle=`rgba(255,255,255,${coreA.toFixed(3)})`;
-   ctx.beginPath();ctx.arc(PX[i],PY[i],r*(1-bk*.35),0,6.2832);ctx.fill();
+   ctx.beginPath();
+   ctx.arc(PX[i],PY[i],r*(1-bk*.35),0,6.2832);
+   ctx.fill();
   }
  }
- ctx.globalCompositeOperation='source-over'}
+ ctx.globalCompositeOperation='source-over';
+}
 
-document.addEventListener('pointerdown',e=>{const b=e.target.closest('.b,.ib,.seg button,.tabs button,.row');if(!b)return;const r=b.getBoundingClientRect(),s=el('span','rip'),d=Math.max(r.width,r.height)*2;s.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;b.append(s);setTimeout(()=>s.remove(),600)});
+document.addEventListener('pointerdown',e=>{
+ const b=e.target.closest('.b,.ib,.seg button,.tabs button,.row');
+ if(!b)return;
+ const r=b.getBoundingClientRect(),s=el('span','rip');
+ const d=Math.max(r.width,r.height)*2;
+ s.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;
+ b.append(s);
+ setTimeout(()=>s.remove(),600);
+});
+
 /* ===== boot ===== */
-addEventListener('pointerdown',e=>{if(S.token&&S.speak&&!e.target.closest('button,textarea,input,select,.drawer,.modal')){audio();speak(t('hi'))}},{once:true});setMode(S.mode);applyUI();setState(S.token?'idle':'error');addMsg('ai',t('hi'));
+addEventListener('pointerdown',e=>{
+ if(S.token&&S.speak&&!e.target.closest('button,textarea,input,select,.drawer,.modal')){
+  audio();
+  speak(t('hi'));
+ }
+},{once:true});
+setMode(S.mode);
+applyUI();
+setState(S.token?'idle':'error');
+addMsg('ai',t('hi'));
 requestAnimationFrame(frame);
 </script></body></html>
